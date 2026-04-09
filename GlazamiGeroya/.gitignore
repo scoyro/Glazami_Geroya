@@ -45,3 +45,14 @@ sysinfo.txt
 # OS
 .DS_Store
 Thumbs.db
+
+# VS Code
+.vscode/
+
+# Editor files
+*.sln
+*.csproj
+*.slnx
+
+# Unity generated assets
+UserSettings/
