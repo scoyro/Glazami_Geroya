@@ -61,7 +61,8 @@ public class PlayerController : MonoBehaviour
         moveX = Input.GetAxis("Horizontal");
         moveZ = Input.GetAxis("Vertical");
 
-        Vector3 move = transform.right * moveX + transform.forward * moveZ;
+        Vector3 move = (transform.right * moveX + transform.forward * moveZ).normalized;
+
         controller.Move(move * speed * Time.deltaTime);
 
         if (controller.isGrounded && velocity.y < 0)
