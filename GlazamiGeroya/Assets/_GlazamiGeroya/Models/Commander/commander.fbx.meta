@@ -1,9 +1,24 @@
 fileFormatVersion: 2
-guid: 775c69dd301db944c801940802931c86
+guid: b98f61171680d3846bcd04965c112a50
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Flo_hands128
+    second: {fileID: 2800000, guid: 7bc944464d3ba3640adc4f59c59ea87d, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Flo_head_128
+    second: {fileID: 2800000, guid: 2e0927e874257944db233df9ab54dd96, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Flo_torso
+    second: {fileID: 2800000, guid: 8a480f5311022b94ab9b6b79a30eed9c, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0

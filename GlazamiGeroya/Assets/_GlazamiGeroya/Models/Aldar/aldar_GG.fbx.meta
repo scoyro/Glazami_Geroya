@@ -1,9 +1,24 @@
 fileFormatVersion: 2
-guid: 68c5f1c26318bd646ae94b5a1cd37a77
+guid: 07569b7fdf8160048965605982d4df07
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: flo_hands128
+    second: {fileID: 2800000, guid: 80e8b8a5a7edc4c409a7bb0c8c0a97fe, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: flo_head_128
+    second: {fileID: 2800000, guid: 9ee2fea008c2e5c46bd663d3fb78e409, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: flo_torso_128
+    second: {fileID: 2800000, guid: eee3421de7ab55f4580377b6b52a3e97, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -92,7 +107,7 @@ ModelImporter:
     legStretch: 0.05
     feetSpacing: 0
     globalScale: 1
-    rootMotionBoneName: 
+    rootMotionBoneName: metarig
     hasTranslationDoF: 0
     hasExtraRoot: 0
     skeletonHasParents: 1
@@ -100,7 +115,7 @@ ModelImporter:
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 2
   humanoidOversampling: 1
-  avatarSetup: 0
+  avatarSetup: 1
   addHumanoidExtraRootOnlyWhenUsingAvatar: 1
   importBlendShapeDeformPercent: 1
   remapMaterialsIfMaterialImportModeIsNone: 0
