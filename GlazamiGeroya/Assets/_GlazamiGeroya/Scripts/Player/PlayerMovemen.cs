@@ -13,6 +13,17 @@ public class PlayerController : MonoBehaviour
     public float minY = -90f;
     public float maxY = 90f;
 
+    [Header("Body Look")]
+    
+    [SerializeField] private Transform headBone;
+    [SerializeField] private Transform upperBodyBone;
+
+    [SerializeField] private float headFollowAmount = 0.7f;
+    [SerializeField] private float bodyFollowAmount = 0.25f;
+
+    private Quaternion headStartRotation;
+    private Quaternion upperBodyStartRotation;
+
     [Header("Head Bobbing")]
     public float bobSpeed = 14f;
     public float bobAmount = 0.08f;
@@ -34,6 +45,12 @@ public class PlayerController : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
+        if (headBone != null)
+            headStartRotation = headBone.localRotation;
+
+        if (upperBodyBone != null)
+            upperBodyStartRotation = upperBodyBone.localRotation;
+
         defaultYPos = cameraTransform.localPosition.y;
     }
 
@@ -43,7 +60,24 @@ public class PlayerController : MonoBehaviour
         Move();
         HandleHeadBob();
     }
+    void LateUpdate()
+    {
+        UpdateBodyLook();
+    }
+    void UpdateBodyLook()
+{
+    if (headBone != null)
+    {
+        Quaternion targetHeadRotation = headStartRotation * Quaternion.Euler(xRotation * headFollowAmount, 0f, 0f);
+        headBone.localRotation = Quaternion.Lerp(headBone.localRotation, targetHeadRotation, Time.deltaTime * 10f);
+    }
 
+    if (upperBodyBone != null)
+    {
+        Quaternion targetBodyRotation = upperBodyStartRotation * Quaternion.Euler(xRotation * bodyFollowAmount, 0f, 0f);
+        upperBodyBone.localRotation = Quaternion.Lerp(upperBodyBone.localRotation, targetBodyRotation, Time.deltaTime * 6f);
+    }
+}
     void Look()
     {
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
