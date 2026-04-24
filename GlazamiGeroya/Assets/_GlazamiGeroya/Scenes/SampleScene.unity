@@ -907,7 +907,7 @@ Transform:
   m_GameObject: {fileID: 1176012306}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.012000722, y: 1.4306121, z: 0.378122}
+  m_LocalPosition: {x: -0.012000722, y: 1.5326527, z: 0.478}
   m_LocalScale: {x: 2.0408156, y: 2.0408168, z: 2.0408156}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1170,6 +1170,7 @@ GameObject:
   - component: {fileID: 1846162267}
   - component: {fileID: 1846162266}
   - component: {fileID: 1846162268}
+  - component: {fileID: 1846162269}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1204,7 +1205,7 @@ Transform:
   m_GameObject: {fileID: 1846162263}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -19.326, y: 2.907, z: 4.98}
+  m_LocalPosition: {x: -19.326, y: 2.839, z: 4.98}
   m_LocalScale: {x: 0.49000016, y: 0.4899999, z: 0.49000016}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1230,6 +1231,10 @@ MonoBehaviour:
   mouseSensitivity: 160
   minY: -90
   maxY: 70
+  headBone: {fileID: 8615969955860995190}
+  upperBodyBone: {fileID: 3488059177720628072}
+  headFollowAmount: 0.7
+  bodyFollowAmount: 0.25
   bobSpeed: 8
   bobAmount: 0.04
   returnSpeed: 1
@@ -1251,7 +1256,7 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 3.4
+  m_Height: 3
   m_Radius: 0.4
   m_SlopeLimit: 45
   m_StepOffset: 0.3
@@ -1285,6 +1290,31 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
+--- !u!114 &1846162269
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1846162263}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0f54d2fc68631549953444117344da2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProceduralWalkAnimation
+  leftUpperLeg: {fileID: 6294768058387075553}
+  rightUpperLeg: {fileID: 8689783644328980469}
+  leftLowerLeg: {fileID: 7846743084041753938}
+  rightLowerLeg: {fileID: 5483843443358517537}
+  leftUpperArm: {fileID: 3101544119569333166}
+  rightUpperArm: {fileID: 4392177556232113094}
+  walkSpeed: 5
+  legAngle: 25
+  kneeAngle: 18
+  armAngle: 18
+  smooth: 10
+  legAxis: {x: 1, y: 0, z: 0}
+  armAxis: {x: 1, y: 0, z: 0}
 --- !u!4 &29614113950698364
 Transform:
   m_ObjectHideFlags: 0
@@ -3678,7 +3708,7 @@ Transform:
   m_GameObject: {fileID: 7566172280416319948}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.02011279, y: -1.5938781, z: 0.008217166}
+  m_LocalPosition: {x: -0.02011279, y: -1.5279593, z: 0.008217166}
   m_LocalScale: {x: 2.0408156, y: 2.0408168, z: 2.0408156}
   m_ConstrainProportionsScale: 0
   m_Children:
