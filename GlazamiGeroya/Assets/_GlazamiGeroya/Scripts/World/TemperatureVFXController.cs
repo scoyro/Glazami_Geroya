@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -9,8 +10,8 @@ public class TemperatureVFXController : MonoBehaviour
 
 
     [Header("Vignette")]
-    [SerializeField] private Color heatColor = new Color(0.8f, 0.05f, 0.02f);
-    [SerializeField] private float maxVignetteIntensity = 0.55f;
+    [SerializeField] private Color heatColor = new Color(0.25f, 0f, 0f);
+    [SerializeField] private float maxVignetteIntensity = 1f;
 
     [Header("Blur / Depth of Field")]
     [SerializeField] private float minBlurRadius = 0f;
@@ -67,10 +68,11 @@ public class TemperatureVFXController : MonoBehaviour
 
         if (vignette != null)
         {
+            float vingetteT = Mathf.Pow(t, 0.6f);
             vignette.active = true;
             vignette.color.Override(heatColor);
-            vignette.intensity.Override(Mathf.Lerp(0f, maxVignetteIntensity, t));
-            vignette.smoothness.Override(Mathf.Lerp(0.35f, 0.8f, t));
+            vignette.intensity.Override(1f);
+            vignette.smoothness.Override(1f);
         }
 
         if (depthOfField != null)
