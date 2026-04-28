@@ -7,6 +7,7 @@ public class TemperatureManager : MonoBehaviour
     [SerializeField] private float currentTemperature = 24f;
     [SerializeField] private float heatSourceTemperatureBonus;
 
+    public TemperatureProfile ActiveProfile => activeProfile;
     public float CurrentTemperature => currentTemperature;
 
     private TemperatureProfile activeProfile;
