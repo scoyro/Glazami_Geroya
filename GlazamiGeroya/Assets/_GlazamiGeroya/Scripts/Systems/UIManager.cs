@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// HUD: подсказка, журнал, мысли героя, обучающие заметки и таймеры.
@@ -18,6 +19,9 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text hintText;
     [SerializeField] private Text timerText;
     [SerializeField] private Slider temperatureSlider;
+    [SerializeField] private TMP_Text temperatureValueText;
+    [SerializeField] private Gradient temperatureTextGradient;
+    
 
     [Header("Settings")]
     [SerializeField] private float startTemperature = 40f;
@@ -94,6 +98,17 @@ public class UIManager : MonoBehaviour
     {
         CurrentTemperature = Mathf.Clamp(value, 0f, maxTemperature);
         UpdateTemperatureUi();
+        UpdateTemperatureText();
+    }
+    private void UpdateTemperatureText()
+    {
+        if (temperatureValueText == null)
+            return;
+
+        temperatureValueText.text = $"{CurrentTemperature:0}°C";
+
+        float t = Mathf.InverseLerp(startTemperature, maxTemperature, CurrentTemperature);
+        temperatureValueText.color = temperatureTextGradient.Evaluate(t);
     }
 
     public void RefreshChecklist(IEnumerable<ChecklistTask> tasks)
