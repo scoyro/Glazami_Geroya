@@ -71,8 +71,8 @@ public class TemperatureVFXController : MonoBehaviour
             float vingetteT = Mathf.Pow(t, 0.6f);
             vignette.active = true;
             vignette.color.Override(heatColor);
-            vignette.intensity.Override(1f);
-            vignette.smoothness.Override(1f);
+            vignette.intensity.Override(Mathf.Lerp(0f, maxVignetteIntensity, vingetteT));
+            vignette.smoothness.Override(Mathf.Lerp(0.35f, 0.8f, t));
         }
 
         if (depthOfField != null)
