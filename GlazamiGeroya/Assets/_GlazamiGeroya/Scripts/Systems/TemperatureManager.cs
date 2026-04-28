@@ -28,6 +28,7 @@ public class TemperatureManager : MonoBehaviour
             transitionTargetTemperature = currentTemperature;
         }
     }
+    
 
     private void Update()
     {
@@ -94,7 +95,19 @@ public class TemperatureManager : MonoBehaviour
             curveValue
         );
     }
+    public void ApplyTemperatureDelta(float delta)
+    {
+        if (Mathf.Abs(delta) <= 0.001f)
+            return;
 
+        currentTemperature = Mathf.Max(0f, currentTemperature + delta);
+        heatSourceTemperatureBonus = Mathf.Max(0f, heatSourceTemperatureBonus + delta);
+
+        if (activeProfile != null)
+            StartTemperatureTransition(activeProfile.targetTemperature + heatSourceTemperatureBonus);
+
+        gameManager?.EventManager?.RaiseTemperatureChanged(currentTemperature);
+    }
     public void SetProfileFromInspector(TemperatureProfile profile)
     {
         SetProfile(profile);

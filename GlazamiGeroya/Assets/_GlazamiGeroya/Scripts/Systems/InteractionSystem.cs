@@ -83,7 +83,7 @@ public class InteractionSystem : MonoBehaviour
         if (!string.IsNullOrWhiteSpace(data.vfxId))
             events.RequestVfx(data.vfxId);
 
-        if (Mathf.Abs(data.temperatureDelta) > 0.001f && gameManager.UIManager != null)
-            events.RaiseTemperatureChanged(gameManager.UIManager.CurrentTemperature + data.temperatureDelta);
+        if (Mathf.Abs(data.temperatureDelta) > 0.001f)
+            gameManager.TemperatureManager?.ApplyTemperatureDelta(data.temperatureDelta);
     }
 }
