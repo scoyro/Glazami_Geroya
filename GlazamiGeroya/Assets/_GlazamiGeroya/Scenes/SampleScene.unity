@@ -1105,7 +1105,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TemperatureVFXController
   globalVolume: {fileID: 1556136015}
   heatColor: {r: 0.25, g: 0, b: 0, a: 1}
-  maxVignetteIntensity: 1
+  maxVignetteIntensity: 0.5
   minBlurRadius: 0
   maxBlurRadius: 2
   maxContrast: 30
@@ -1197,7 +1197,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 37.473083, y: -11}
+  m_AnchoredPosition: {x: 37.473145, y: -11}
   m_SizeDelta: {x: 181.667, y: 72.156}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &775459789
@@ -1550,7 +1550,6 @@ GameObject:
   m_Component:
   - component: {fileID: 832575519}
   - component: {fileID: 832575518}
-  - component: {fileID: 832575520}
   m_Layer: 0
   m_Name: Global Volume
   m_TagString: Untagged
@@ -1590,27 +1589,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &832575520
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 832575517}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 3.530901, y: 1, z: 2.977857}
-  m_Center: {x: -0.12820148, y: 0, z: 0.98892856}
 --- !u!1 &844844029
 GameObject:
   m_ObjectHideFlags: 0
@@ -1930,7 +1908,7 @@ Canvas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1004744284}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_RenderMode: 0
   m_Camera: {fileID: 0}
