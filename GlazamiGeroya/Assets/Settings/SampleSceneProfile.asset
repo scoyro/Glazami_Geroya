@@ -42,19 +42,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.DepthOfField
   active: 1
   mode:
-    m_OverrideState: 0
-    m_Value: 0
+    m_OverrideState: 1
+    m_Value: 1
   gaussianStart:
-    m_OverrideState: 0
-    m_Value: 10
+    m_OverrideState: 1
+    m_Value: 0
   gaussianEnd:
-    m_OverrideState: 0
-    m_Value: 30
+    m_OverrideState: 1
+    m_Value: 10
   gaussianMaxRadius:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 1
   highQualitySampling:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0
   focusDistance:
     m_OverrideState: 0
