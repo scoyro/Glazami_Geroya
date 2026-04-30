@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: 
   targetTemperature: 42
   dangerTemperature: 40
-  lethalTemperature: 70
+  lethalTemperature: 80
   temperatureCurve:
     serializedVersion: 2
     m_Curve:

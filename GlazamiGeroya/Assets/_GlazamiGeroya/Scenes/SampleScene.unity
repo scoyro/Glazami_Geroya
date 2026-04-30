@@ -1316,9 +1316,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edf9c2bfa60158e4c9ed37189aaa6fa2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TemperatureVFXController
-  globalVolume: {fileID: 1556136015}
+  temperatureVolume: {fileID: 1556136015}
+  volumeFadeSpeed: 2.5
+  preDangerTemperatureRange: 15
+  weightAtDangerTemperature: 0.75
   heatColor: {r: 0.25, g: 0, b: 0, a: 1}
-  maxVignetteIntensity: 1
+  maxVignetteIntensity: 0.5
   minBlurRadius: 0
   maxBlurRadius: 2
   maxContrast: 30
@@ -1762,7 +1765,6 @@ GameObject:
   m_Component:
   - component: {fileID: 832575519}
   - component: {fileID: 832575518}
-  - component: {fileID: 832575520}
   m_Layer: 0
   m_Name: Global Volume
   m_TagString: Untagged
@@ -1802,27 +1804,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &832575520
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 832575517}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 3.530901, y: 1, z: 2.977857}
-  m_Center: {x: -0.12820148, y: 0, z: 0.98892856}
 --- !u!1 &844844029
 GameObject:
   m_ObjectHideFlags: 0
@@ -1888,8 +1869,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 4.174711, y: 2.0186257, z: 2.4836597}
-  m_Center: {x: -0.16248417, y: 0.50931287, z: -0.17029476}
+  m_Size: {x: 4.174711, y: 2.0186257, z: 2.5043073}
+  m_Center: {x: -0.16248417, y: 0.50931287, z: -0.18061852}
 --- !u!1 &914556142
 GameObject:
   m_ObjectHideFlags: 0
@@ -2142,7 +2123,7 @@ Canvas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1004744284}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_RenderMode: 0
   m_Camera: {fileID: 0}
@@ -2415,7 +2396,7 @@ MonoBehaviour:
   m_RendererIndex: -1
   m_VolumeLayerMask:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 4294967295
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
   m_RenderPostProcessing: 1
@@ -3358,9 +3339,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
   m_IsGlobal: 1
-  priority: 0
+  priority: 10
   blendDistance: 0
-  weight: 1
+  weight: 0
   sharedProfile: {fileID: 11400000, guid: 2c76cf3dbd069c44db59b7d1f9fa95f6, type: 2}
 --- !u!4 &1556136016
 Transform:

@@ -95,7 +95,7 @@ public class ChoiceSystem : MonoBehaviour
         events.RequestVoice("incident_announcement");
         events.RequestUiMessage("Авария в машинном отделении.");
         events.RequestThought(crisisThought);
-        events.RaiseTemperatureChanged(gameManager.UIManager != null ? gameManager.UIManager.CurrentTemperature + 20f : 60f);
+        gameManager.TemperatureManager?.ApplyTemperatureDelta(20f);
     }
 
     private void ResolveCrisisPhase(string actionId)
