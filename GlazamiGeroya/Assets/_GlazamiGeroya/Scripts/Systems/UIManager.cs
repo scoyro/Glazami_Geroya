@@ -154,9 +154,9 @@ public class UIManager : MonoBehaviour
         foreach (var task in visibleTasks)
         {
             if (task.isCompleted)
-                sb.AppendLine($"<color=#888888><s>✓ {task.title}</s></color>");
+                sb.AppendLine($"<color=#888888>[v] {task.title}</color>");
             else
-                sb.AppendLine($"<color=#FFFFFF>• {task.title}</color>");
+                sb.AppendLine($"<color=#FFFFFF>[x] {task.title}</color>");
         }
 
         checklistText.text = sb.ToString();

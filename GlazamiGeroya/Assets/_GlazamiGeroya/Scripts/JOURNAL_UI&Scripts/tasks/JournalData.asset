@@ -13,4 +13,5 @@ MonoBehaviour:
   m_Name: JournalData
   m_EditorClassIdentifier: Assembly-CSharp::JournalData
   journalTitle: "\u041F\u043E\u043B\u0435\u0432\u043E\u0439 \u0436\u0443\u0440\u043D\u0430\u043B"
-  tasks: []
+  tasks:
+  - {fileID: 11400000, guid: 8c3426d007c7b494d8e954a327c91182, type: 2}
