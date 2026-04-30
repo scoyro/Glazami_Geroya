@@ -1197,7 +1197,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 37.473083, y: -11}
+  m_AnchoredPosition: {x: 37.47296, y: -11}
   m_SizeDelta: {x: 181.667, y: 72.156}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &775459789
@@ -2406,7 +2406,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 4.78, y: 39.46, z: 4.29}
+  m_Size: {x: 7.7, y: 88.26, z: 6.47}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!65 &1184671265
 BoxCollider:
@@ -2999,7 +2999,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1503069077
 RectTransform:
   m_ObjectHideFlags: 0

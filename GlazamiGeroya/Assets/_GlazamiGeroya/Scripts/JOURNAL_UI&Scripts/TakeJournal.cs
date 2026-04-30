@@ -13,7 +13,7 @@ public class TakeJournal : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             text.SetActive(true);
-            if (Input.GetKeyDown(KeyCode.E))
+            if (Input.GetKey(KeyCode.E))
             {
                 Destroy(me);
             }
