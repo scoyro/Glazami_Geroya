@@ -13,7 +13,8 @@ public class UIManager : MonoBehaviour
 {
     [Header("Optional UI References")]
     [SerializeField] private Text promptText;
-    [SerializeField] private Text checklistText;
+    [SerializeField] private GameObject checklistPanel;
+    [SerializeField] private TMP_Text checklistText;
     [SerializeField] private Text messageText;
     [SerializeField] private Text thoughtText;
     [SerializeField] private Text hintText;
@@ -47,6 +48,9 @@ public class UIManager : MonoBehaviour
         SetMessage(string.Empty);
         SetTimerText(string.Empty);
 
+        if (checklistPanel != null)
+            checklistPanel.SetActive(false);
+
         if (gameManager?.EventManager != null)
         {
             gameManager.EventManager.OnUiMessageRequested -= SetMessage;
@@ -65,6 +69,7 @@ public class UIManager : MonoBehaviour
             gameManager.EventManager.OnValveTimerStarted += StartValveTimer;
             gameManager.EventManager.OnTimersStopped += StopCountdown;
         }
+
     }
 
     private void Update()
@@ -119,16 +124,39 @@ public class UIManager : MonoBehaviour
         if (tasks == null)
         {
             checklistText.text = string.Empty;
+
+            if (checklistPanel != null)
+                checklistPanel.SetActive(false);
+
             return;
         }
 
-        var visibleTasks = tasks.Where(t => t != null && t.isVisible).ToList();
+        var visibleTasks = tasks
+            .Where(t => t != null && t.isVisible)
+            .ToList();
+
+        bool hasVisibleTasks = visibleTasks.Count > 0;
+
+        if (checklistPanel != null)
+            checklistPanel.SetActive(hasVisibleTasks);
+
+        if (!hasVisibleTasks)
+        {
+            checklistText.text = string.Empty;
+            return;
+        }
+
         var sb = new StringBuilder();
+
+        sb.AppendLine("<b>Задачи</b>");
+        sb.AppendLine();
 
         foreach (var task in visibleTasks)
         {
-            string mark = task.isCompleted ? "[x]" : "[ ]";
-            sb.AppendLine($"{mark} {task.title}");
+            if (task.isCompleted)
+                sb.AppendLine($"<color=#888888><s>✓ {task.title}</s></color>");
+            else
+                sb.AppendLine($"<color=#FFFFFF>• {task.title}</color>");
         }
 
         checklistText.text = sb.ToString();
