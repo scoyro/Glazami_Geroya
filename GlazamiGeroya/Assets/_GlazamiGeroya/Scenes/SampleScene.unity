@@ -1106,7 +1106,7 @@ MonoBehaviour:
   temperatureVolume: {fileID: 1556136015}
   volumeFadeSpeed: 2.5
   preDangerTemperatureRange: 15
-  weightAtDangerTemperature: 0.5
+  weightAtDangerTemperature: 0.75
   heatColor: {r: 0.25, g: 0, b: 0, a: 1}
   maxVignetteIntensity: 0.5
   minBlurRadius: 0
