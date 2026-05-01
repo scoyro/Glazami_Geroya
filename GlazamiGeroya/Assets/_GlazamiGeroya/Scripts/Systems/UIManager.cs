@@ -12,13 +12,15 @@ using TMPro;
 public class UIManager : MonoBehaviour
 {
     [Header("Optional UI References")]
-    [SerializeField] private Text promptText;
+    [SerializeField] private TMP_Text promptText;
     [SerializeField] private GameObject checklistPanel;
     [SerializeField] private TMP_Text checklistText;
-    [SerializeField] private Text messageText;
-    [SerializeField] private Text thoughtText;
-    [SerializeField] private Text hintText;
-    [SerializeField] private Text timerText;
+    [SerializeField] private TMP_Text messageText;
+    [SerializeField] private TMP_Text thoughtText;
+    [Header("Typing")]
+    [SerializeField] private float thoughtTypingSpeed = 0.035f;
+    [SerializeField] private TMP_Text hintText;
+    [SerializeField] private TMP_Text timerText;
     [SerializeField] private Slider temperatureSlider;
     [SerializeField] private TMP_Text temperatureValueText;
     [SerializeField] private Gradient temperatureTextGradient;
@@ -69,7 +71,6 @@ public class UIManager : MonoBehaviour
             gameManager.EventManager.OnValveTimerStarted += StartValveTimer;
             gameManager.EventManager.OnTimersStopped += StopCountdown;
         }
-
     }
 
     private void Update()
@@ -118,7 +119,7 @@ public class UIManager : MonoBehaviour
 
     public void RefreshChecklist(IEnumerable<ChecklistTask> tasks)
     {
-        if (checklistText == null)
+                if (checklistText == null)
             return;
 
         if (tasks == null)
@@ -170,7 +171,23 @@ public class UIManager : MonoBehaviour
         if (thoughtRoutine != null)
             StopCoroutine(thoughtRoutine);
 
-        thoughtRoutine = StartCoroutine(ShowTimedText(thoughtText, text, thoughtDuration));
+        thoughtRoutine = StartCoroutine(
+            ShowTypedText(thoughtText, text, thoughtTypingSpeed, thoughtDuration)
+        );
+    }
+    private IEnumerator ShowTypedText(TMP_Text target, string text, float typingSpeed, float visibleDuration)
+    {
+        target.text = string.Empty;
+
+        foreach (char c in text)
+        {
+            target.text += c;
+            yield return new WaitForSeconds(typingSpeed);
+        }
+
+        yield return new WaitForSeconds(visibleDuration);
+
+        target.text = string.Empty;
     }
 
     public void ShowHint(string text)
@@ -181,7 +198,9 @@ public class UIManager : MonoBehaviour
         if (hintRoutine != null)
             StopCoroutine(hintRoutine);
 
-        hintRoutine = StartCoroutine(ShowTimedText(hintText, text, hintDuration));
+        hintRoutine = StartCoroutine(
+            ShowTypedText(hintText, text, thoughtTypingSpeed, hintDuration)
+        );
     }
 
     public void StartIncidentTimer(float seconds)
@@ -209,12 +228,6 @@ public class UIManager : MonoBehaviour
         SetTimerText(string.Empty);
     }
 
-    private IEnumerator ShowTimedText(Text target, string text, float duration)
-    {
-        target.text = text;
-        yield return new WaitForSeconds(duration);
-        target.text = string.Empty;
-    }
 
     private void SetTimerText(string text)
     {

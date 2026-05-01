@@ -2,7 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Простое включение эффектов по id.
+/// Включение и запуск эффектов по id.
+/// Поддерживает обычные GameObject VFX и эффекты с компонентом IPlayableVfx.
 /// </summary>
 public class VFXController : MonoBehaviour
 {
@@ -33,23 +34,47 @@ public class VFXController : MonoBehaviour
 
     public void PlayVfx(string vfxId)
     {
-        if (string.IsNullOrWhiteSpace(vfxId)) return;
-        if (vfxMap.TryGetValue(vfxId, out var target) && target != null)
-            target.SetActive(true);
+        if (string.IsNullOrWhiteSpace(vfxId))
+            return;
+
+        if (!vfxMap.TryGetValue(vfxId, out var target) || target == null)
+            return;
+
+        target.SetActive(true);
+
+        var playable = target.GetComponent<IPlayableVfx>();
+        if (playable != null)
+            playable.Play();
     }
 
     public void StopVfx(string vfxId)
     {
-        if (string.IsNullOrWhiteSpace(vfxId)) return;
-        if (vfxMap.TryGetValue(vfxId, out var target) && target != null)
-            target.SetActive(false);
+        if (string.IsNullOrWhiteSpace(vfxId))
+            return;
+
+        if (!vfxMap.TryGetValue(vfxId, out var target) || target == null)
+            return;
+
+        var playable = target.GetComponent<IPlayableVfx>();
+        if (playable != null)
+            playable.Stop();
+
+        target.SetActive(false);
     }
 
     private void OnDestroy()
     {
-        if (gameManager?.EventManager == null) return;
+        if (gameManager?.EventManager == null)
+            return;
+
         gameManager.EventManager.OnVfxRequested -= PlayVfx;
     }
+}
+
+public interface IPlayableVfx
+{
+    void Play();
+    void Stop();
 }
 
 [System.Serializable]
