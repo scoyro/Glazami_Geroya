@@ -3,9 +3,6 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "TemperatureProfile", menuName = "GlazamiGeroya/Temperature Profile")]
 public class TemperatureProfile : ScriptableObject
 {
-    public string id;
-    public string displayName;
-
     public float targetTemperature = 25f;
 
     public float dangerTemperature = 60f;
