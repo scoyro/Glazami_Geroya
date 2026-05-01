@@ -11,6 +11,11 @@ public class InteractionSystem : MonoBehaviour
     [SerializeField] private float interactDistance = 3f;
     [SerializeField] private KeyCode interactKey = KeyCode.E;
     [SerializeField] private LayerMask interactionMask = ~0;
+    [SerializeField] private float interactRadius = 0.15f;
+    [SerializeField] private float promptClearDelay = 0.08f;
+
+    private InteractionTarget lastTarget;
+    private float lastTargetSeenTime;
 
     private GameManager gameManager;
 
@@ -27,27 +32,40 @@ public class InteractionSystem : MonoBehaviour
             return;
 
         var target = GetCurrentTarget();
-        if (target == null)
+
+        if (target != null && target.CanInteract(gameManager.GameStateManager))
         {
-            gameManager.UIManager.SetPrompt(string.Empty);
+            lastTarget = target;
+            lastTargetSeenTime = Time.time;
+
+            gameManager.UIManager.SetPrompt(target.PromptText);
+
+            if (Input.GetKeyDown(interactKey))
+                PerformInteraction(target);
+
             return;
         }
 
-        if (!target.CanInteract(gameManager.GameStateManager))
+        if (lastTarget != null && Time.time - lastTargetSeenTime < promptClearDelay)
         {
-            gameManager.UIManager.SetPrompt(string.Empty);
+            gameManager.UIManager.SetPrompt(lastTarget.PromptText);
             return;
         }
 
-        gameManager.UIManager.SetPrompt(target.PromptText);
-
-        if (Input.GetKeyDown(interactKey))
-            PerformInteraction(target);
+        lastTarget = null;
+        gameManager.UIManager.SetPrompt(string.Empty);
     }
 
     private InteractionTarget GetCurrentTarget()
     {
-        if (!Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out RaycastHit hit, interactDistance, interactionMask))
+        if (!Physics.SphereCast(
+                playerCamera.transform.position,
+                interactRadius,
+                playerCamera.transform.forward,
+                out RaycastHit hit,
+                interactDistance,
+                interactionMask,
+                QueryTriggerInteraction.Collide))
             return null;
 
         return hit.collider.GetComponentInParent<InteractionTarget>();
@@ -69,7 +87,7 @@ public class InteractionSystem : MonoBehaviour
             gameManager.ChecklistManager?.CompleteTask(data.completesTaskId);
 
         if (!string.IsNullOrWhiteSpace(data.hintText))
-            events.RaiseHintUnlocked(data.hintText);
+            events.RaiseHintUnlocked(data.hintText, data.textDuration);
 
         if (!string.IsNullOrWhiteSpace(data.uiMessage))
             events.RequestUiMessage(data.uiMessage);
@@ -83,7 +101,7 @@ public class InteractionSystem : MonoBehaviour
         if (!string.IsNullOrWhiteSpace(data.vfxId))
             events.RequestVfx(data.vfxId);
 
-        if (Mathf.Abs(data.temperatureDelta) > 0.001f && gameManager.UIManager != null)
-            events.RaiseTemperatureChanged(gameManager.UIManager.CurrentTemperature + data.temperatureDelta);
+        if (Mathf.Abs(data.temperatureDelta) > 0.001f)
+            gameManager.TemperatureManager?.ApplyTemperatureDelta(data.temperatureDelta);
     }
 }

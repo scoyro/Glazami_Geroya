@@ -75,10 +75,10 @@ public class ChoiceSystem : MonoBehaviour
             knownFacts.Add(data.interactionId);
 
         if (!string.IsNullOrWhiteSpace(data.thoughtText) && !data.revealOnlyOnce)
-            gameManager?.EventManager?.RequestThought(data.thoughtText);
+            gameManager?.EventManager?.RequestThought(data.thoughtText, data.textDuration);
 
         if (!string.IsNullOrWhiteSpace(data.thoughtText) && data.revealOnlyOnce && usedOneShotThoughts.Add(data.interactionId))
-            gameManager?.EventManager?.RequestThought(data.thoughtText);
+            gameManager?.EventManager?.RequestThought(data.thoughtText, data.textDuration);
     }
 
     public void StartIncident()
@@ -95,7 +95,7 @@ public class ChoiceSystem : MonoBehaviour
         events.RequestVoice("incident_announcement");
         events.RequestUiMessage("Авария в машинном отделении.");
         events.RequestThought(crisisThought);
-        events.RaiseTemperatureChanged(gameManager.UIManager != null ? gameManager.UIManager.CurrentTemperature + 20f : 60f);
+        gameManager.TemperatureManager?.ApplyTemperatureDelta(20f);
     }
 
     private void ResolveCrisisPhase(string actionId)

@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     [Header("Managers")]
+    [SerializeField] private TemperatureManager temperatureManager;
     [SerializeField] private SceneController sceneController;
     [SerializeField] private EventManager eventManager;
     [SerializeField] private ChoiceSystem choiceSystem;
@@ -19,6 +20,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private AtmosphereManager atmosphereManager;
     [SerializeField] private GameStateManager gameStateManager;
     [SerializeField] private EndingController endingController;
+    [SerializeField] private TemperatureVFXController temperatureVFXController;
 
     public SceneController SceneController => sceneController;
     public EventManager EventManager => eventManager;
@@ -30,6 +32,8 @@ public class GameManager : MonoBehaviour
     public AtmosphereManager AtmosphereManager => atmosphereManager;
     public GameStateManager GameStateManager => gameStateManager;
     public EndingController EndingController => endingController;
+    public TemperatureManager TemperatureManager => temperatureManager;
+    public TemperatureVFXController TemperatureVFXController => temperatureVFXController;
 
     public static event Action<GameManager> OnGameManagerReady;
 
@@ -63,6 +67,8 @@ public class GameManager : MonoBehaviour
         if (atmosphereManager == null) atmosphereManager = GetComponentInChildren<AtmosphereManager>(true);
         if (gameStateManager == null) gameStateManager = GetComponentInChildren<GameStateManager>(true);
         if (endingController == null) endingController = GetComponentInChildren<EndingController>(true);
+        if (temperatureManager == null) temperatureManager = GetComponentInChildren<TemperatureManager>(true);
+        if (temperatureVFXController == null) temperatureVFXController = GetComponentInChildren<TemperatureVFXController>(true);
     }
 
     public void Bootstrap()
@@ -79,6 +85,8 @@ public class GameManager : MonoBehaviour
         atmosphereManager?.Initialize(this);
         gameStateManager?.Initialize(this);
         endingController?.Initialize(this);
+        temperatureManager?.Initialize(this);
+        temperatureVFXController?.Initialize(this);
 
         OnGameManagerReady?.Invoke(this);
     }

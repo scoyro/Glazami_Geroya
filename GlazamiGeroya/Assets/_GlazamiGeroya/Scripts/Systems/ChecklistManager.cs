@@ -31,6 +31,14 @@ public class ChecklistManager : MonoBehaviour
 
         PushUi();
     }
+    // проверка на выполнение
+    public bool IsTaskCompleted(string taskId)
+    {
+        if (string.IsNullOrWhiteSpace(taskId))
+            return true;
+
+        return tasks.TryGetValue(taskId, out var task) && task.isCompleted;
+    }
 
     public void CompleteTask(string taskId)
     {
@@ -39,6 +47,13 @@ public class ChecklistManager : MonoBehaviour
 
         task.isCompleted = true;
         tasks[taskId] = task;
+
+        if (!string.IsNullOrWhiteSpace(task.nextTaskId) && tasks.TryGetValue(task.nextTaskId, out var nextTask))
+        {
+            nextTask.isVisible = true;
+            tasks[task.nextTaskId] = nextTask;
+        }
+
         gameManager?.EventManager?.RaiseTaskCompleted(taskId);
         PushUi();
     }
@@ -109,6 +124,9 @@ public class ChecklistTask
     public bool isVisible = true;
     public bool isCompleted;
 
+    [Header("Следующая задача")]
+    public string nextTaskId;
+
     public ChecklistTask() { }
 
     public ChecklistTask(ChecklistTask other)
@@ -117,5 +135,6 @@ public class ChecklistTask
         title = other.title;
         isVisible = other.isVisible;
         isCompleted = other.isCompleted;
+        nextTaskId = other.nextTaskId;
     }
 }

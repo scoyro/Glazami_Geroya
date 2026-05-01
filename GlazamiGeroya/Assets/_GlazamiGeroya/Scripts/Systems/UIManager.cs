@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// HUD: подсказка, журнал, мысли героя, обучающие заметки и таймеры.
@@ -11,13 +12,19 @@ using UnityEngine.UI;
 public class UIManager : MonoBehaviour
 {
     [Header("Optional UI References")]
-    [SerializeField] private Text promptText;
-    [SerializeField] private Text checklistText;
-    [SerializeField] private Text messageText;
-    [SerializeField] private Text thoughtText;
-    [SerializeField] private Text hintText;
-    [SerializeField] private Text timerText;
+    [SerializeField] private TMP_Text promptText;
+    [SerializeField] private GameObject checklistPanel;
+    [SerializeField] private TMP_Text checklistText;
+    [SerializeField] private TMP_Text messageText;
+    [SerializeField] private TMP_Text thoughtText;
+    [Header("Typing")]
+    [SerializeField] private float thoughtTypingSpeed = 0.035f;
+    [SerializeField] private TMP_Text hintText;
+    [SerializeField] private TMP_Text timerText;
     [SerializeField] private Slider temperatureSlider;
+    [SerializeField] private TMP_Text temperatureValueText;
+    [SerializeField] private Gradient temperatureTextGradient;
+    
 
     [Header("Settings")]
     [SerializeField] private float startTemperature = 40f;
@@ -42,6 +49,9 @@ public class UIManager : MonoBehaviour
         SetPrompt(string.Empty);
         SetMessage(string.Empty);
         SetTimerText(string.Empty);
+
+        if (checklistPanel != null)
+            checklistPanel.SetActive(false);
 
         if (gameManager?.EventManager != null)
         {
@@ -94,32 +104,66 @@ public class UIManager : MonoBehaviour
     {
         CurrentTemperature = Mathf.Clamp(value, 0f, maxTemperature);
         UpdateTemperatureUi();
+        UpdateTemperatureText();
+    }
+    private void UpdateTemperatureText()
+    {
+        if (temperatureValueText == null)
+            return;
+
+        temperatureValueText.text = $"{CurrentTemperature:0}°C";
+
+        float t = Mathf.InverseLerp(startTemperature, maxTemperature, CurrentTemperature);
+        temperatureValueText.color = temperatureTextGradient.Evaluate(t);
     }
 
     public void RefreshChecklist(IEnumerable<ChecklistTask> tasks)
     {
-        if (checklistText == null)
+                if (checklistText == null)
             return;
 
         if (tasks == null)
         {
             checklistText.text = string.Empty;
+
+            if (checklistPanel != null)
+                checklistPanel.SetActive(false);
+
             return;
         }
 
-        var visibleTasks = tasks.Where(t => t != null && t.isVisible).ToList();
+        var visibleTasks = tasks
+            .Where(t => t != null && t.isVisible)
+            .ToList();
+
+        bool hasVisibleTasks = visibleTasks.Count > 0;
+
+        if (checklistPanel != null)
+            checklistPanel.SetActive(hasVisibleTasks);
+
+        if (!hasVisibleTasks)
+        {
+            checklistText.text = string.Empty;
+            return;
+        }
+
         var sb = new StringBuilder();
+
+        sb.AppendLine("<b>Задачи</b>");
+        sb.AppendLine();
 
         foreach (var task in visibleTasks)
         {
-            string mark = task.isCompleted ? "[x]" : "[ ]";
-            sb.AppendLine($"{mark} {task.title}");
+            if (task.isCompleted)
+                sb.AppendLine($"<color=#888888>[v] {task.title}</color>");
+            else
+                sb.AppendLine($"<color=#FFFFFF>[x] {task.title}</color>");
         }
 
         checklistText.text = sb.ToString();
     }
 
-    public void ShowThought(string text)
+    public void ShowThought(string text, float duration = -1f)
     {
         if (thoughtText == null)
             return;
@@ -127,10 +171,28 @@ public class UIManager : MonoBehaviour
         if (thoughtRoutine != null)
             StopCoroutine(thoughtRoutine);
 
-        thoughtRoutine = StartCoroutine(ShowTimedText(thoughtText, text, thoughtDuration));
+        float finalDuration = duration > 0f ? duration : thoughtDuration;
+
+        thoughtRoutine = StartCoroutine(
+            ShowTypedText(thoughtText, text, thoughtTypingSpeed, finalDuration)
+        );
+    }
+    private IEnumerator ShowTypedText(TMP_Text target, string text, float typingSpeed, float visibleDuration)
+    {
+        target.text = string.Empty;
+
+        foreach (char c in text)
+        {
+            target.text += c;
+            yield return new WaitForSeconds(typingSpeed);
+        }
+
+        yield return new WaitForSeconds(visibleDuration);
+
+        target.text = string.Empty;
     }
 
-    public void ShowHint(string text)
+    public void ShowHint(string text, float duration = -1f)
     {
         if (hintText == null)
             return;
@@ -138,7 +200,11 @@ public class UIManager : MonoBehaviour
         if (hintRoutine != null)
             StopCoroutine(hintRoutine);
 
-        hintRoutine = StartCoroutine(ShowTimedText(hintText, text, hintDuration));
+        float finalDuration = duration > 0f ? duration : hintDuration;
+
+        hintRoutine = StartCoroutine(
+            ShowTypedText(hintText, text, thoughtTypingSpeed, finalDuration)
+        );
     }
 
     public void StartIncidentTimer(float seconds)
@@ -166,12 +232,6 @@ public class UIManager : MonoBehaviour
         SetTimerText(string.Empty);
     }
 
-    private IEnumerator ShowTimedText(Text target, string text, float duration)
-    {
-        target.text = text;
-        yield return new WaitForSeconds(duration);
-        target.text = string.Empty;
-    }
 
     private void SetTimerText(string text)
     {
