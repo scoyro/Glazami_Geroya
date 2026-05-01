@@ -12,8 +12,8 @@ public class EventManager : MonoBehaviour
     public event Action<string> OnSceneLoaded;
     public event Action<InteractionData> OnInteractionPerformed;
     public event Action<string> OnTaskCompleted;
-    public event Action<string> OnHintUnlocked;
-    public event Action<string> OnThoughtRequested;
+    public event Action<string, float> OnHintUnlocked;
+    public event Action<string, float> OnThoughtRequested;
     public event Action<string> OnUiMessageRequested;
     public event Action<float> OnTemperatureChanged;
     public event Action<float> OnIncidentTimerStarted;
@@ -34,8 +34,11 @@ public class EventManager : MonoBehaviour
     public void RaiseSceneLoaded(string sceneName) => OnSceneLoaded?.Invoke(sceneName);
     public void RaiseInteractionPerformed(InteractionData data) => OnInteractionPerformed?.Invoke(data);
     public void RaiseTaskCompleted(string taskId) => OnTaskCompleted?.Invoke(taskId);
-    public void RaiseHintUnlocked(string hintText) => OnHintUnlocked?.Invoke(hintText);
-    public void RequestThought(string thoughtText) => OnThoughtRequested?.Invoke(thoughtText);
+    public void RaiseHintUnlocked(string hintText, float duration = -1f)
+    => OnHintUnlocked?.Invoke(hintText, duration);
+
+    public void RequestThought(string thoughtText, float duration = -1f)
+        => OnThoughtRequested?.Invoke(thoughtText, duration);
     public void RequestUiMessage(string message) => OnUiMessageRequested?.Invoke(message);
     public void RaiseTemperatureChanged(float temperature) => OnTemperatureChanged?.Invoke(temperature);
     public void StartIncidentTimer(float duration) => OnIncidentTimerStarted?.Invoke(duration);
@@ -79,6 +82,7 @@ public struct InteractionData
     public string completesTaskId;
     public string hintText;
     public string thoughtText;
+    public float textDuration;
     public string uiMessage;
     public string sfxId;
     public string voiceId;

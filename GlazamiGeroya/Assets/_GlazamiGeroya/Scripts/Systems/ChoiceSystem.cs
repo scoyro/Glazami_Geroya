@@ -75,10 +75,10 @@ public class ChoiceSystem : MonoBehaviour
             knownFacts.Add(data.interactionId);
 
         if (!string.IsNullOrWhiteSpace(data.thoughtText) && !data.revealOnlyOnce)
-            gameManager?.EventManager?.RequestThought(data.thoughtText);
+            gameManager?.EventManager?.RequestThought(data.thoughtText, data.textDuration);
 
         if (!string.IsNullOrWhiteSpace(data.thoughtText) && data.revealOnlyOnce && usedOneShotThoughts.Add(data.interactionId))
-            gameManager?.EventManager?.RequestThought(data.thoughtText);
+            gameManager?.EventManager?.RequestThought(data.thoughtText, data.textDuration);
     }
 
     public void StartIncident()

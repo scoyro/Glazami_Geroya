@@ -163,7 +163,7 @@ public class UIManager : MonoBehaviour
         checklistText.text = sb.ToString();
     }
 
-    public void ShowThought(string text)
+    public void ShowThought(string text, float duration = -1f)
     {
         if (thoughtText == null)
             return;
@@ -171,8 +171,10 @@ public class UIManager : MonoBehaviour
         if (thoughtRoutine != null)
             StopCoroutine(thoughtRoutine);
 
+        float finalDuration = duration > 0f ? duration : thoughtDuration;
+
         thoughtRoutine = StartCoroutine(
-            ShowTypedText(thoughtText, text, thoughtTypingSpeed, thoughtDuration)
+            ShowTypedText(thoughtText, text, thoughtTypingSpeed, finalDuration)
         );
     }
     private IEnumerator ShowTypedText(TMP_Text target, string text, float typingSpeed, float visibleDuration)
@@ -190,7 +192,7 @@ public class UIManager : MonoBehaviour
         target.text = string.Empty;
     }
 
-    public void ShowHint(string text)
+    public void ShowHint(string text, float duration = -1f)
     {
         if (hintText == null)
             return;
@@ -198,8 +200,10 @@ public class UIManager : MonoBehaviour
         if (hintRoutine != null)
             StopCoroutine(hintRoutine);
 
+        float finalDuration = duration > 0f ? duration : hintDuration;
+
         hintRoutine = StartCoroutine(
-            ShowTypedText(hintText, text, thoughtTypingSpeed, hintDuration)
+            ShowTypedText(hintText, text, thoughtTypingSpeed, finalDuration)
         );
     }
 
