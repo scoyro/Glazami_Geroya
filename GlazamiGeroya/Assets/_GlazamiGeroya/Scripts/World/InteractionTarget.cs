@@ -17,6 +17,8 @@ public class InteractionTarget : MonoBehaviour
     [Header("Events")]
     [SerializeField] private UnityEvent onInteract;
 
+    [SerializeField] private string requiredCompletedTaskId;
+
     private bool wasUsed;
 
     public string PromptText => promptText;
@@ -29,6 +31,16 @@ public class InteractionTarget : MonoBehaviour
 
         if (stateManager == null)
             return true;
+
+        if (!string.IsNullOrWhiteSpace(requiredCompletedTaskId))
+        {
+            if (GameManager.Instance == null ||
+                GameManager.Instance.ChecklistManager == null ||
+                !GameManager.Instance.ChecklistManager.IsTaskCompleted(requiredCompletedTaskId))
+            {
+                return false;
+            }
+        }
 
         if (interactionData.interactionKind == InteractionKind.CriticalAction)
             return stateManager.Phase == GamePhase.Crisis || stateManager.Phase == GamePhase.ValveSequence;

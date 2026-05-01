@@ -69,7 +69,7 @@ public class InteractionSystem : MonoBehaviour
             gameManager.ChecklistManager?.CompleteTask(data.completesTaskId);
 
         if (!string.IsNullOrWhiteSpace(data.hintText))
-            events.RaiseHintUnlocked(data.hintText);
+            events.RaiseHintUnlocked(data.hintText, data.textDuration);
 
         if (!string.IsNullOrWhiteSpace(data.uiMessage))
             events.RequestUiMessage(data.uiMessage);

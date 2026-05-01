@@ -31,6 +31,14 @@ public class ChecklistManager : MonoBehaviour
 
         PushUi();
     }
+    // проверка на выполнение
+    public bool IsTaskCompleted(string taskId)
+    {
+        if (string.IsNullOrWhiteSpace(taskId))
+            return true;
+
+        return tasks.TryGetValue(taskId, out var task) && task.isCompleted;
+    }
 
     public void CompleteTask(string taskId)
     {
