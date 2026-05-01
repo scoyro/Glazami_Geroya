@@ -1084,6 +1084,7 @@ MonoBehaviour:
   onInteract:
     m_PersistentCalls:
       m_Calls: []
+  requiredCompletedTaskId: 
 --- !u!136 &446868522
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -4431,6 +4432,7 @@ MonoBehaviour:
   onInteract:
     m_PersistentCalls:
       m_Calls: []
+  requiredCompletedTaskId: 
 --- !u!1 &1197031842
 GameObject:
   m_ObjectHideFlags: 0
@@ -5065,7 +5067,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ChecklistManager
   initialTasks:
   - id: take_journal
-    title: 
+    title: "\u0412\u0437\u044F\u0442\u044C \u0436\u0443\u0440\u043D\u0430\u043B"
     isVisible: 0
     isCompleted: 0
     nextTaskId: inspect_tank
@@ -6937,7 +6939,7 @@ MonoBehaviour:
       \u0442\u043E\u043F\u043B\u0438\u0432\u043E. \u041F\u0440\u0438 \u0430\u0432\u0430\u0440\u0438\u0438
       \u0432\u0430\u0436\u043D\u043E \u043F\u0435\u0440\u0435\u043A\u0440\u044B\u0442\u044C
       \u043F\u043E\u0434\u0430\u0447\u0443."
-    textDuration: 10
+    textDuration: 6
     uiMessage: 
     sfxId: 
     voiceId: 
@@ -6945,10 +6947,11 @@ MonoBehaviour:
     temperatureDelta: 0
     revealOnlyOnce: 0
     startCrisis: 0
-  disableAfterUse: 0
+  disableAfterUse: 1
   onInteract:
     m_PersistentCalls:
       m_Calls: []
+  requiredCompletedTaskId: take_journal
 --- !u!1 &2029691534
 GameObject:
   m_ObjectHideFlags: 0
@@ -10923,7 +10926,7 @@ GameObject:
   - component: {fileID: 7551422041151442085}
   - component: {fileID: 7551422041151442087}
   m_Layer: 0
-  m_Name: Cylinder
+  m_Name: Tank
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
