@@ -68,7 +68,7 @@ public class InteractionSystem : MonoBehaviour
                 QueryTriggerInteraction.Collide))
             return null;
 
-        return hit.collider.GetComponentInParent<InteractionTarget>();
+        return hit.collider.GetComponent<InteractionTarget>();
     }
 
     private void PerformInteraction(InteractionTarget target)

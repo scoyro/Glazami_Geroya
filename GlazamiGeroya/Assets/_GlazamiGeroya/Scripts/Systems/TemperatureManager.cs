@@ -101,8 +101,6 @@ public class TemperatureManager : MonoBehaviour
     public void AddHeatSource(float value)
     {
         heatSourceTemperatureBonus += value;
-
-        heatSourceTemperatureBonus += value;
         RecalculateTemperatureTarget();
     }
 
@@ -199,6 +197,41 @@ public class TemperatureManager : MonoBehaviour
         activeHeatSources.RemoveWhere(source => source == null || !source.isActiveAndEnabled);
         RecalculateActiveProfile();
         RecalculateHeatBonus();
+    }
+    public void RefreshZonesForPlayer(Collider playerCollider)
+    {
+        activeZones.Clear();
+
+        if (playerCollider == null)
+        {
+            RecalculateActiveProfile();
+            RecalculateTemperatureTarget();
+            return;
+        }
+
+        Physics.SyncTransforms();
+
+        Collider[] hits = Physics.OverlapBox(
+            playerCollider.bounds.center,
+            playerCollider.bounds.extents,
+            playerCollider.transform.rotation,
+            ~0,
+            QueryTriggerInteraction.Collide
+        );
+
+        foreach (Collider hit in hits)
+        {
+            TemperatureZone zone = hit.GetComponentInParent<TemperatureZone>();
+
+            if (zone == null || zone.Profile == null)
+                continue;
+
+            if (!activeZones.Contains(zone))
+                activeZones.Add(zone);
+        }
+
+        RecalculateActiveProfile();
+        RecalculateTemperatureTarget();
     }
     public void ApplyTemperatureDelta(float delta)
     {
