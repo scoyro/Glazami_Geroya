@@ -88,11 +88,17 @@ public class UIManager : MonoBehaviour
         if (countdownRemaining <= 0f)
             timerRunning = false;
     }
-
+    private string currentPrompt;
     public void SetPrompt(string text)
     {
-        if (promptText != null)
-            promptText.text = text;
+        if (promptText == null)
+            return;
+
+        if (currentPrompt == text)
+            return;
+
+        currentPrompt = text;
+        promptText.text = text;
     }
 
     public void SetMessage(string text, float duration = 4f)

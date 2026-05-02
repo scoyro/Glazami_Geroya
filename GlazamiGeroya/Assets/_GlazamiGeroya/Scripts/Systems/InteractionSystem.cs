@@ -9,99 +9,126 @@ public class InteractionSystem : MonoBehaviour
     [Header("Interaction")]
     [SerializeField] private Camera playerCamera;
     [SerializeField] private float interactDistance = 3f;
-    [SerializeField] private float interactRadius = 0.1f;
     [SerializeField] private KeyCode interactKey = KeyCode.E;
-    [SerializeField] private LayerMask interactionMask = ~0;
+    [SerializeField] private float allowedAimRadius = 0.35f;
+    [SerializeField] private float keepAimRadius = 0.55f;
 
     [Header("Stability")]
-    [SerializeField] private float promptClearDelay = 0.12f;
+    [SerializeField] private float targetSwitchDelay = 0.25f;
+    [SerializeField] private int missedFramesToLose = 6;
 
     private InteractionTarget lastTarget;
-    private float lastTargetSeenTime;
-
+    private float lastTargetSwitchTime;
+    private int missedFrameCount;
+    private LayerMask interactionMask;
     private GameManager gameManager;
 
     public void Initialize(GameManager manager)
     {
+        if (gameManager != null && gameManager == manager)
+            return;
+
         gameManager = manager;
 
         if (playerCamera == null)
             playerCamera = Camera.main;
+
+        interactionMask = LayerMask.GetMask("Interactable");
     }
 
-    private void Update()
+    private void LateUpdate()
     {
         if (playerCamera == null || gameManager == null || gameManager.UIManager == null)
             return;
 
         InteractionTarget detectedTarget = GetCurrentTarget();
 
-        // Если нашли цель
         if (detectedTarget != null && detectedTarget.CanInteract(gameManager.GameStateManager))
         {
-            lastTarget = detectedTarget;
-            lastTargetSeenTime = Time.time;
+            bool canSwitchTarget =
+                lastTarget == null ||
+                detectedTarget == lastTarget ||
+                Time.time - lastTargetSwitchTime >= targetSwitchDelay;
 
-            gameManager.UIManager.SetPrompt(detectedTarget.PromptText);
+            if (canSwitchTarget)
+            {
+                if (lastTarget != detectedTarget)
+                    lastTargetSwitchTime = Time.time;
 
-            if (Input.GetKeyDown(interactKey))
-                PerformInteraction(detectedTarget);
+                lastTarget = detectedTarget;
+            }
 
-            return;
+            missedFrameCount = 0;
+        }
+        else
+        {
+            missedFrameCount++;
         }
 
-        // Если цель только что потерялась — удерживаем её немного
-        if (lastTarget != null && Time.time - lastTargetSeenTime < promptClearDelay)
+        bool targetLost = lastTarget == null
+            || !lastTarget.gameObject.activeInHierarchy
+            || missedFrameCount >= missedFramesToLose
+            || !lastTarget.CanInteract(gameManager.GameStateManager);
+
+        if (!targetLost)
         {
             gameManager.UIManager.SetPrompt(lastTarget.PromptText);
 
-            if (Input.GetKeyDown(interactKey) && lastTarget.CanInteract(gameManager.GameStateManager))
+            if (Input.GetKeyDown(interactKey))
                 PerformInteraction(lastTarget);
 
             return;
         }
 
-        // Полная потеря цели
-        lastTarget = null;
+        if (missedFrameCount >= missedFramesToLose)
+        {
+            missedFrameCount = 0;
+            lastTarget = null;
+        }
+
         gameManager.UIManager.SetPrompt(string.Empty);
     }
 
     private InteractionTarget GetCurrentTarget()
     {
-        Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
+        // Прямой raycast по центру экрана
+        if (Physics.Raycast(
+            playerCamera.transform.position,
+            playerCamera.transform.forward,
+            out RaycastHit hit,
+            interactDistance,
+            interactionMask,
+            QueryTriggerInteraction.Collide))
+        {
+            InteractionTarget target = hit.collider.GetComponent<InteractionTarget>();
+            if (target != null)
+                return target;
+        }
+
+        // Fallback — SphereCast для объектов чуть в стороне от прицела
+        float radius = (lastTarget != null) ? keepAimRadius : allowedAimRadius;
 
         RaycastHit[] hits = Physics.SphereCastAll(
-            ray,
-            interactRadius,
+            playerCamera.transform.position,
+            radius,
+            playerCamera.transform.forward,
             interactDistance,
             interactionMask,
             QueryTriggerInteraction.Collide
         );
 
-        if (hits == null || hits.Length == 0)
-            return null;
-
         InteractionTarget bestTarget = null;
-        float bestScore = float.MinValue;
+        float bestDistance = float.MaxValue;
 
-        foreach (RaycastHit hit in hits)
+        foreach (RaycastHit sphereHit in hits)
         {
-            InteractionTarget target = hit.collider.GetComponent<InteractionTarget>();
-
+            InteractionTarget target = sphereHit.collider.GetComponent<InteractionTarget>();
             if (target == null)
                 continue;
 
-            Vector3 directionToTarget = (hit.collider.bounds.center - playerCamera.transform.position).normalized;
-
-            float dot = Vector3.Dot(playerCamera.transform.forward, directionToTarget);
-
-            // Чем ближе к центру экрана, тем лучше.
-            // Чем ближе физически, тем немного лучше.
-            float score = dot * 10f - hit.distance * 0.1f;
-
-            if (score > bestScore)
+            if (sphereHit.distance < bestDistance)
             {
-                bestScore = score;
+                bestDistance = sphereHit.distance;
                 bestTarget = target;
             }
         }
