@@ -9,10 +9,12 @@ public class InteractionSystem : MonoBehaviour
     [Header("Interaction")]
     [SerializeField] private Camera playerCamera;
     [SerializeField] private float interactDistance = 3f;
+    [SerializeField] private float interactRadius = 0.1f;
     [SerializeField] private KeyCode interactKey = KeyCode.E;
     [SerializeField] private LayerMask interactionMask = ~0;
-    [SerializeField] private float interactRadius = 0.15f;
-    [SerializeField] private float promptClearDelay = 0.08f;
+
+    [Header("Stability")]
+    [SerializeField] private float promptClearDelay = 0.12f;
 
     private InteractionTarget lastTarget;
     private float lastTargetSeenTime;
@@ -22,6 +24,7 @@ public class InteractionSystem : MonoBehaviour
     public void Initialize(GameManager manager)
     {
         gameManager = manager;
+
         if (playerCamera == null)
             playerCamera = Camera.main;
     }
@@ -31,44 +34,79 @@ public class InteractionSystem : MonoBehaviour
         if (playerCamera == null || gameManager == null || gameManager.UIManager == null)
             return;
 
-        var target = GetCurrentTarget();
+        InteractionTarget detectedTarget = GetCurrentTarget();
 
-        if (target != null && target.CanInteract(gameManager.GameStateManager))
+        // Если нашли цель
+        if (detectedTarget != null && detectedTarget.CanInteract(gameManager.GameStateManager))
         {
-            lastTarget = target;
+            lastTarget = detectedTarget;
             lastTargetSeenTime = Time.time;
 
-            gameManager.UIManager.SetPrompt(target.PromptText);
+            gameManager.UIManager.SetPrompt(detectedTarget.PromptText);
 
             if (Input.GetKeyDown(interactKey))
-                PerformInteraction(target);
+                PerformInteraction(detectedTarget);
 
             return;
         }
 
+        // Если цель только что потерялась — удерживаем её немного
         if (lastTarget != null && Time.time - lastTargetSeenTime < promptClearDelay)
         {
             gameManager.UIManager.SetPrompt(lastTarget.PromptText);
+
+            if (Input.GetKeyDown(interactKey) && lastTarget.CanInteract(gameManager.GameStateManager))
+                PerformInteraction(lastTarget);
+
             return;
         }
 
+        // Полная потеря цели
         lastTarget = null;
         gameManager.UIManager.SetPrompt(string.Empty);
     }
 
     private InteractionTarget GetCurrentTarget()
     {
-        if (!Physics.SphereCast(
-                playerCamera.transform.position,
-                interactRadius,
-                playerCamera.transform.forward,
-                out RaycastHit hit,
-                interactDistance,
-                interactionMask,
-                QueryTriggerInteraction.Collide))
+        Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
+
+        RaycastHit[] hits = Physics.SphereCastAll(
+            ray,
+            interactRadius,
+            interactDistance,
+            interactionMask,
+            QueryTriggerInteraction.Collide
+        );
+
+        if (hits == null || hits.Length == 0)
             return null;
 
-        return hit.collider.GetComponent<InteractionTarget>();
+        InteractionTarget bestTarget = null;
+        float bestScore = float.MinValue;
+
+        foreach (RaycastHit hit in hits)
+        {
+            InteractionTarget target = hit.collider.GetComponent<InteractionTarget>();
+
+            if (target == null)
+                continue;
+
+            Vector3 directionToTarget = (hit.collider.bounds.center - playerCamera.transform.position).normalized;
+
+            float dot = Vector3.Dot(playerCamera.transform.forward, directionToTarget);
+
+            // Чем ближе к центру экрана, тем лучше.
+            // Чем ближе физически, тем немного лучше.
+            float score = dot * 10f - hit.distance * 0.1f;
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestTarget = target;
+            }
+        }
+
+        return bestTarget;
     }
 
     private void PerformInteraction(InteractionTarget target)
@@ -90,7 +128,7 @@ public class InteractionSystem : MonoBehaviour
             events.RaiseHintUnlocked(data.hintText, data.textDuration);
 
         if (!string.IsNullOrWhiteSpace(data.uiMessage))
-            events.RequestUiMessage(data.uiMessage);
+            events.RequestUiMessage(data.uiMessage, data.textDuration);
 
         if (!string.IsNullOrWhiteSpace(data.sfxId))
             events.RequestSfx(data.sfxId);

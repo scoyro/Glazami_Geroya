@@ -262,7 +262,7 @@ Transform:
   m_GameObject: {fileID: 193001452}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -2.3250217, y: 0.458, z: 0.29849958}
+  m_LocalPosition: {x: -2.3250217, y: 0.853, z: 0.185}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -414,6 +414,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 297733684}
+  - component: {fileID: 297733685}
   m_Layer: 0
   m_Name: Stairs_1
   m_TagString: Untagged
@@ -434,10 +435,25 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 742095479}
   - {fileID: 591168882}
   - {fileID: 193001453}
   m_Father: {fileID: 6773300256392439112}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &297733685
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 297733683}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed0da3519153cc748aeb7198a0029979, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LadderInteractionState
+  topInteractPoint: {fileID: 591168881}
+  bottomInteractPoint: {fileID: 193001452}
 --- !u!1 &329215110
 GameObject:
   m_ObjectHideFlags: 0
@@ -1697,7 +1713,7 @@ Transform:
   m_GameObject: {fileID: 591168881}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -2.3250217, y: 2.569, z: 0.29849958}
+  m_LocalPosition: {x: -2.3250217, y: 2.5689998, z: 0.29850006}
   m_LocalScale: {x: 1, y: 0.35661754, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2640,6 +2656,74 @@ Transform:
   - {fileID: 459224083}
   m_Father: {fileID: 542922899}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &742095478
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 742095479}
+  - component: {fileID: 742095481}
+  - component: {fileID: 742095480}
+  m_Layer: 0
+  m_Name: TopLadderZone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &742095479
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 742095478}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -2.29, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 297733684}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &742095480
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 742095478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91b675e65accacc4c909a53b98283e30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LadderInteractionZone
+  ladderState: {fileID: 297733685}
+  isTopZone: 1
+--- !u!65 &742095481
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 742095478}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.120779, y: 1.2440815, z: 2.4442172}
+  m_Center: {x: -0.08352375, y: 2.646358, z: -0.03771472}
 --- !u!1 &775459787
 GameObject:
   m_ObjectHideFlags: 0
@@ -3463,6 +3547,74 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 915947330}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &959674165
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 959674166}
+  - component: {fileID: 959674168}
+  - component: {fileID: 959674167}
+  m_Layer: 0
+  m_Name: BottomLadderZone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &959674166
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 959674165}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.000000014901161, z: -0, w: 1}
+  m_LocalPosition: {x: -5.296, y: 0.06, z: -11.959}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6773300256392439112}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &959674167
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 959674165}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91b675e65accacc4c909a53b98283e30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LadderInteractionZone
+  ladderState: {fileID: 297733685}
+  isTopZone: 0
+--- !u!65 &959674168
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 959674165}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.120779, y: 1.2440815, z: 1.2739472}
+  m_Center: {x: -0.08352375, y: 2.646358, z: 0.103399515}
 --- !u!1 &964084366
 GameObject:
   m_ObjectHideFlags: 0
@@ -4021,6 +4173,7 @@ Transform:
   - {fileID: 597153748}
   - {fileID: 634459574}
   - {fileID: 1803162836}
+  - {fileID: 1248713859}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1119824348
@@ -4241,6 +4394,74 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1082191383}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1144930956
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1144930957}
+  - component: {fileID: 1144930959}
+  - component: {fileID: 1144930958}
+  m_Layer: 0
+  m_Name: BottomLadderZone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1144930957
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1144930956}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.70710576, z: -0, w: 0.70710784}
+  m_LocalPosition: {x: 4.061, y: -2.0470002, z: -18.05}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6773300256392439112}
+  m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
+--- !u!114 &1144930958
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1144930956}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91b675e65accacc4c909a53b98283e30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LadderInteractionZone
+  ladderState: {fileID: 2060162329}
+  isTopZone: 0
+--- !u!65 &1144930959
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1144930956}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.120779, y: 1.2440815, z: 1.2739472}
+  m_Center: {x: -0.08352375, y: 2.646358, z: 0.103399515}
 --- !u!1 &1156133006
 GameObject:
   m_ObjectHideFlags: 0
@@ -4400,7 +4621,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 63
+    m_Bits: 4294967295
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -4752,6 +4973,74 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1197031842}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1218760605
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1218760606}
+  - component: {fileID: 1218760608}
+  - component: {fileID: 1218760607}
+  m_Layer: 0
+  m_Name: TopLadderZone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1218760606
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1218760605}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 3.979, y: 0.76, z: -18.161}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6773300256392439112}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1218760607
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1218760605}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91b675e65accacc4c909a53b98283e30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LadderInteractionZone
+  ladderState: {fileID: 2060162329}
+  isTopZone: 1
+--- !u!65 &1218760608
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1218760605}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.9055042, y: 1.2440815, z: 2.4442172}
+  m_Center: {x: -0.69116116, y: 2.646358, z: -0.03771472}
 --- !u!1 &1246228180
 GameObject:
   m_ObjectHideFlags: 0
@@ -4807,12 +5096,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1248713858}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 16.93897, y: -0, z: -13.41766}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1082191383}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1248818479
 GameObject:
@@ -5751,15 +6040,15 @@ RectTransform:
   m_GameObject: {fileID: 1503069076}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2.1885, y: 1.8962, z: 1.551}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1004744285}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.013707, y: 0.00015261}
-  m_SizeDelta: {x: 1134.8, y: 693.25}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0.013672, y: 85}
+  m_SizeDelta: {x: -125.19995, y: 33.25}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1503069078
 MonoBehaviour:
@@ -6878,13 +7167,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractionSystem
   playerCamera: {fileID: 1176012310}
-  interactDistance: 2
+  interactDistance: 1
+  interactRadius: 0.7
   interactKey: 101
   interactionMask:
     serializedVersion: 2
     m_Bits: 8
-  interactRadius: 0.7
-  promptClearDelay: 0.08
+  promptClearDelay: 0.15
 --- !u!1 &1809804533
 GameObject:
   m_ObjectHideFlags: 0
@@ -6910,7 +7199,7 @@ Transform:
   m_GameObject: {fileID: 1809804533}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.28673935, y: -0.924, z: -1.1700001}
+  m_LocalPosition: {x: -0.28673935, y: -2.15, z: -1.1700001}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7097,11 +7386,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractionSystem
   playerCamera: {fileID: 1176012310}
   interactDistance: 2
+  interactRadius: 0.15
   interactKey: 101
   interactionMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  interactRadius: 0.15
   promptClearDelay: 0.08
 --- !u!4 &1846162265
 Transform:
@@ -7119,7 +7408,7 @@ Transform:
   - {fileID: 1176012307}
   - {fileID: 7082932094706344822}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 369.763, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 635.066, z: 0}
 --- !u!114 &1846162266
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7657,6 +7946,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2060162328}
+  - component: {fileID: 2060162329}
   m_Layer: 3
   m_Name: Stairs_2
   m_TagString: Untagged
@@ -7681,6 +7971,20 @@ Transform:
   - {fileID: 377836232}
   m_Father: {fileID: 6773300256392439112}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
+--- !u!114 &2060162329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2060162327}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed0da3519153cc748aeb7198a0029979, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LadderInteractionState
+  topInteractPoint: {fileID: 1724200866}
+  bottomInteractPoint: {fileID: 377836231}
 --- !u!1 &2062135661
 GameObject:
   m_ObjectHideFlags: 0
@@ -12613,7 +12917,10 @@ Transform:
   - {fileID: 1307098646507196164}
   - {fileID: 4009575309154665774}
   - {fileID: 297733684}
+  - {fileID: 959674166}
   - {fileID: 2060162328}
+  - {fileID: 1218760606}
+  - {fileID: 1144930957}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!64 &6773300256392439113
@@ -13179,7 +13486,7 @@ GameObject:
   - component: {fileID: 7551422041151442086}
   - component: {fileID: 7551422041151442085}
   - component: {fileID: 7551422041151442087}
-  m_Layer: 3
+  m_Layer: 0
   m_Name: Tank
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14909,5 +15216,4 @@ SceneRoots:
   - {fileID: 542922899}
   - {fileID: 1846162265}
   - {fileID: 914556143}
-  - {fileID: 1248713859}
   - {fileID: 6773300256392439112}
