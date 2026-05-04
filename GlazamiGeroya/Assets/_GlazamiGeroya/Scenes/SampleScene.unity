@@ -1871,6 +1871,99 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 507317635}
   m_CullTransparentMesh: 1
+--- !u!1 &526510275
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 526510276}
+  - component: {fileID: 526510278}
+  - component: {fileID: 526510277}
+  m_Layer: 3
+  m_Name: Trigger_ScamStairs
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &526510276
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526510275}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 29614113950698364}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &526510277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526510275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 932c7859f7dd69548a5942f50de2a17f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionTarget
+  promptText: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 E"
+  interactionData:
+    interactionId: 
+    interactionKind: 0
+    completesTaskId: 
+    hintText: "\u042D\u0442\u0430 \u043B\u0435\u0441\u0442\u043D\u0438\u0446\u0430
+      \u0432\u0435\u0434\u0451\u0442 \u043D\u0430\u0432\u0435\u0440\u0445 \u043A
+      \u0442\u043E\u0432\u0430\u0440\u0438\u0449\u0430\u043C. \u041E\u043D\u0438
+      \u0432\u0441\u0435\u0433\u0434\u0430 \u0432\u044B\u0440\u0443\u0447\u0430\u044E\u0442
+      \u0432 \u0442\u0440\u0443\u0434\u043D\u0443\u044E \u043C\u0438\u043D\u0443\u0442\u0443"
+    thoughtText: 
+    textDuration: 6
+    uiMessage: 
+    sfxId: 
+    voiceId: 
+    vfxId: 
+    temperatureDelta: 0
+    revealOnlyOnce: 0
+    startCrisis: 0
+    imageId: 
+    imageDuration: 0
+    textDelay: 0
+  disableAfterUse: 0
+  onInteract:
+    m_PersistentCalls:
+      m_Calls: []
+  requiredCompletedTaskId: 
+--- !u!65 &526510278
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526510275}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.91, y: 2.2, z: 0.7}
+  m_Center: {x: -1.4, y: 3.09, z: -14.36}
 --- !u!1 &542922898
 GameObject:
   m_ObjectHideFlags: 0
@@ -6041,6 +6134,12 @@ MonoBehaviour:
       \u043F\u043E\u0436\u0430\u0440\u043E\u0442\u0443\u0448\u0435\u043D\u0438\u044F"
     isVisible: 0
     isCompleted: 0
+    nextTaskId: end_tasks
+  - id: end_tasks
+    title: "\u0412\u0435\u0440\u043D\u0443\u0442\u044C \u0436\u0443\u0440\u043D\u0430\u043B
+      \u043D\u0430\u0447\u0430\u043B\u044C\u043D\u0438\u043A\u0443"
+    isVisible: 0
+    isCompleted: 0
     nextTaskId: 
   crisisTasks: []
 --- !u!4 &1328480481
@@ -8254,8 +8353,8 @@ Transform:
   m_GameObject: {fileID: 1920899530}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.49300003, y: 2.611, z: -18.202}
-  m_LocalScale: {x: 1.6732, y: 1, z: 1.8633106}
+  m_LocalPosition: {x: 0.66, y: 2.94, z: -18.202}
+  m_LocalScale: {x: 1.6732, y: 0.35, z: 1.8633106}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 454745112248785042}
@@ -8775,7 +8874,8 @@ Transform:
   m_LocalPosition: {x: -0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 526510276}
   m_Father: {fileID: 6773300256392439112}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &80372311932972702
@@ -14747,13 +14847,73 @@ GameObject:
   m_Component:
   - component: {fileID: 6611711252587892539}
   - component: {fileID: 7270772605489690361}
-  m_Layer: 0
+  - component: {fileID: 8239027984302886829}
+  - component: {fileID: 8239027984302886830}
+  m_Layer: 3
   m_Name: HEAD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &8239027984302886829
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8239027984302886828}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 932c7859f7dd69548a5942f50de2a17f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionTarget
+  promptText: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 E"
+  interactionData:
+    interactionId: end_tasks
+    interactionKind: 0
+    completesTaskId: end_tasks
+    hintText: "\u041C\u043E\u043B\u043E\u0434\u0435\u0446! \u043C\u043E\u0436\u0435\u0448\u044C
+      \u043E\u0442\u0434\u044B\u0445\u0430\u0442\u044C \u043F\u043E\u043A\u0430 \u0447\u0442\u043E..."
+    thoughtText: "\u041C\u043E\u0436\u0435\u0442 \u0441\u0445\u043E\u0434\u0438\u0442\u044C
+      \u043F\u043E\u043C\u044B\u0442\u044C\u0441\u044F?"
+    textDuration: 5
+    uiMessage: 
+    sfxId: 
+    voiceId: 
+    vfxId: 
+    temperatureDelta: 0
+    revealOnlyOnce: 0
+    startCrisis: 0
+    imageId: 
+    imageDuration: 0
+    textDelay: 0
+  disableAfterUse: 0
+  onInteract:
+    m_PersistentCalls:
+      m_Calls: []
+  requiredCompletedTaskId: inspect_iof
+--- !u!65 &8239027984302886830
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8239027984302886828}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12.9, y: 11.33, z: 28.6}
+  m_Center: {x: 0.0008361905, y: 1.9232234, z: -9.775003}
 --- !u!1 &8251800073248714462
 GameObject:
   m_ObjectHideFlags: 0
