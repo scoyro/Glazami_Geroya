@@ -25,6 +25,7 @@ public class EventManager : MonoBehaviour
     public event Action<string> OnVfxRequested;
     public event Action<GamePhase> OnPhaseChanged;
     public event Action<GameResult, string> OnGameFinished;
+    public event Action<string, float> OnImageRequested;
 
     public void Initialize(GameManager manager)
     {
@@ -48,6 +49,8 @@ public class EventManager : MonoBehaviour
     public void RequestSfx(string soundId) => OnSfxRequested?.Invoke(soundId);
     public void RequestVoice(string voiceId) => OnVoiceRequested?.Invoke(voiceId);
     public void RequestVfx(string vfxId) => OnVfxRequested?.Invoke(vfxId);
+    public void RequestImage(string imageId, float duration = 4f)
+    => OnImageRequested?.Invoke(imageId, duration);
     public void SetPhase(GamePhase phase) => OnPhaseChanged?.Invoke(phase);
     public void FinishGame(GameResult result, string endingId) => OnGameFinished?.Invoke(result, endingId);
 }
@@ -90,4 +93,7 @@ public struct InteractionData
     public float temperatureDelta;
     public bool revealOnlyOnce;
     public bool startCrisis;
+    public string imageId;
+    public float imageDuration;
+    public float textDelay;
 }
