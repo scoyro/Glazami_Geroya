@@ -2326,7 +2326,7 @@ Light:
   m_InnerSpotAngle: 53.159805
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
-    m_Type: 2
+    m_Type: 0
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 0.7
@@ -5309,7 +5309,7 @@ Light:
   m_InnerSpotAngle: 53.159805
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
-    m_Type: 2
+    m_Type: 0
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 0.7
@@ -6516,7 +6516,9 @@ GameObject:
   - component: {fileID: 1710502664}
   - component: {fileID: 1710502663}
   - component: {fileID: 1710502662}
-  m_Layer: 0
+  - component: {fileID: 1710502666}
+  - component: {fileID: 1710502665}
+  m_Layer: 3
   m_Name: Cube_(1) (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6617,6 +6619,60 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1710502660}
   m_Mesh: {fileID: -8149531598234640965, guid: 3e97415d03c057441b3088bf02826828, type: 3}
+--- !u!65 &1710502665
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1710502660}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.440382, y: 1.369914, z: 2.2820168}
+  m_Center: {x: -4.202586, y: 2.3349345, z: -19.068144}
+--- !u!114 &1710502666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1710502660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 932c7859f7dd69548a5942f50de2a17f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionTarget
+  promptText: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 E"
+  interactionData:
+    interactionId: inspect_iof
+    interactionKind: 0
+    completesTaskId: inspect_iof
+    hintText: 
+    thoughtText: "\u042D\u0442\u043E \u043F\u0430\u043D\u0435\u043B\u044C \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F
+      \u0441\u0438\u0441\u0442\u0435\u043C\u043E\u0439 \u043F\u043E\u0436\u0430\u0440\u043E\u0442\u0443\u0448\u0435\u043D\u0438\u044F"
+    textDuration: 6
+    uiMessage: 
+    sfxId: 
+    voiceId: 
+    vfxId: 
+    temperatureDelta: 0
+    revealOnlyOnce: 0
+    startCrisis: 0
+  disableAfterUse: 0
+  onInteract:
+    m_PersistentCalls:
+      m_Calls: []
+  requiredCompletedTaskId: inspect_tank
 --- !u!1 &1724200866
 GameObject:
   m_ObjectHideFlags: 0
@@ -7100,7 +7156,7 @@ Light:
   m_InnerSpotAngle: 53.159805
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
-    m_Type: 2
+    m_Type: 0
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 0.7
@@ -9837,7 +9893,8 @@ GameObject:
   - component: {fileID: 7465018973712083967}
   - component: {fileID: 7465018973712083966}
   - component: {fileID: 7465018973712083968}
-  m_Layer: 0
+  - component: {fileID: 7465018973712083969}
+  m_Layer: 3
   m_Name: Cylinder_(1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13532,6 +13589,41 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 3.65341, y: 0.1188221, z: 2.8418674}
   m_Center: {x: -5.6501646, y: 4.21824, z: -12.3637495}
+--- !u!114 &7465018973712083969
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2031412248849667129}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 932c7859f7dd69548a5942f50de2a17f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionTarget
+  promptText: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 E"
+  interactionData:
+    interactionId: 
+    interactionKind: 0
+    completesTaskId: 
+    hintText: 
+    thoughtText: "\u042D\u0442\u043E \u0446\u0438\u0441\u0442\u0435\u0440\u043D\u0430,
+      \u0432 \u043A\u043E\u0442\u043E\u0440\u043E\u0439 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442\u0441\u044F
+      \u0436\u0438\u0434\u043A\u043E\u0441\u0442\u044C \u0434\u043B\u044F \u0442\u0443\u0448\u0435\u043D\u0438\u044F
+      \u043F\u043E\u0436\u0430\u0440\u043E\u0432 "
+    textDuration: 5
+    uiMessage: 
+    sfxId: 
+    voiceId: 
+    vfxId: 
+    temperatureDelta: 0
+    revealOnlyOnce: 0
+    startCrisis: 0
+  disableAfterUse: 0
+  onInteract:
+    m_PersistentCalls:
+      m_Calls: []
+  requiredCompletedTaskId: 
 --- !u!1 &7551422041151442083
 GameObject:
   m_ObjectHideFlags: 0
