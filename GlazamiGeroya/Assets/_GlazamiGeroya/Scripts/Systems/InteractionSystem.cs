@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using System.Collections;
 /// <summary>
 /// Лучевая система взаимодействий игрока.
 /// Никаких всплывающих окон выбора — только осмотр и действие в мире.
@@ -22,6 +22,7 @@ public class InteractionSystem : MonoBehaviour
     private int missedFrameCount;
     private LayerMask interactionMask;
     private GameManager gameManager;
+
 
     public void Initialize(GameManager manager)
     {
@@ -88,7 +89,25 @@ public class InteractionSystem : MonoBehaviour
 
         gameManager.UIManager.SetPrompt(string.Empty);
     }
+    private IEnumerator ShowTextAfterDelay(InteractionData data)
+    {
+        yield return new WaitForSeconds(data.textDelay);
+        ShowInteractionText(data);
+    }
 
+    private void ShowInteractionText(InteractionData data)
+    {
+        var events = gameManager.EventManager;
+
+        if (events == null)
+            return;
+
+        if (!string.IsNullOrWhiteSpace(data.hintText))
+            events.RaiseHintUnlocked(data.hintText, data.textDuration);
+
+        if (!string.IsNullOrWhiteSpace(data.uiMessage))
+            events.RequestUiMessage(data.uiMessage, data.textDuration);
+    }
     private InteractionTarget GetCurrentTarget()
     {
         // Прямой raycast по центру экрана
@@ -151,11 +170,20 @@ public class InteractionSystem : MonoBehaviour
         if (!string.IsNullOrWhiteSpace(data.completesTaskId))
             gameManager.ChecklistManager?.CompleteTask(data.completesTaskId);
 
-        if (!string.IsNullOrWhiteSpace(data.hintText))
-            events.RaiseHintUnlocked(data.hintText, data.textDuration);
+        if (data.textDelay > 0f)
+        {
+            StartCoroutine(ShowTextAfterDelay(data));
+        }
+        else
+        {
+            ShowInteractionText(data);
+        }
 
-        if (!string.IsNullOrWhiteSpace(data.uiMessage))
-            events.RequestUiMessage(data.uiMessage, data.textDuration);
+        if (!string.IsNullOrWhiteSpace(data.imageId))
+        {
+            float duration = data.imageDuration > 0f ? data.imageDuration : data.textDuration;
+            events.RequestImage(data.imageId, duration);
+        }
 
         if (!string.IsNullOrWhiteSpace(data.sfxId))
             events.RequestSfx(data.sfxId);
