@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9a6e96f0421766e428d96b39808c73c8, type: 3}
-  m_Name: Corridor_Temperature
+  m_Name: ControlRoom_Temperature 1
   m_EditorClassIdentifier: Assembly-CSharp::TemperatureProfile
-  targetTemperature: 32
+  targetTemperature: 36
   dangerTemperature: 50
   lethalTemperature: 80
   temperatureCurve:

@@ -34,6 +34,7 @@ public class UIManager : MonoBehaviour
 
     public float CurrentTemperature { get; private set; }
 
+    private Coroutine messageRoutine;
     private GameManager gameManager;
     private Coroutine thoughtRoutine;
     private Coroutine hintRoutine;
@@ -87,16 +88,30 @@ public class UIManager : MonoBehaviour
         if (countdownRemaining <= 0f)
             timerRunning = false;
     }
-
+    private string currentPrompt;
     public void SetPrompt(string text)
     {
-        if (promptText != null)
-            promptText.text = text;
+        if (promptText == null)
+            return;
+
+        if (currentPrompt == text)
+            return;
+
+        currentPrompt = text;
+        promptText.text = text;
     }
 
-    public void SetMessage(string text)
+    public void SetMessage(string text, float duration = 4f)
     {
-        if (messageText != null)
+        if (messageText == null)
+            return;
+
+        if (messageRoutine != null)
+            StopCoroutine(messageRoutine);
+
+        if (duration > 0f)
+            messageRoutine = StartCoroutine(ShowTimedMessage(text, duration));
+        else
             messageText.text = text;
     }
 
@@ -176,6 +191,13 @@ public class UIManager : MonoBehaviour
         thoughtRoutine = StartCoroutine(
             ShowTypedText(thoughtText, text, thoughtTypingSpeed, finalDuration)
         );
+    }
+    private IEnumerator ShowTimedMessage(string text, float duration)
+    {
+        messageText.text = text;
+        yield return new WaitForSeconds(duration);
+        messageText.text = string.Empty;
+        messageRoutine = null;
     }
     private IEnumerator ShowTypedText(TMP_Text target, string text, float typingSpeed, float visibleDuration)
     {

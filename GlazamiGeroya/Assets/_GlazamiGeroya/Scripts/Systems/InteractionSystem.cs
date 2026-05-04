@@ -10,65 +10,130 @@ public class InteractionSystem : MonoBehaviour
     [SerializeField] private Camera playerCamera;
     [SerializeField] private float interactDistance = 3f;
     [SerializeField] private KeyCode interactKey = KeyCode.E;
-    [SerializeField] private LayerMask interactionMask = ~0;
-    [SerializeField] private float interactRadius = 0.15f;
-    [SerializeField] private float promptClearDelay = 0.08f;
+    [SerializeField] private float allowedAimRadius = 0.35f;
+    [SerializeField] private float keepAimRadius = 0.55f;
+
+    [Header("Stability")]
+    [SerializeField] private float targetSwitchDelay = 0.25f;
+    [SerializeField] private int missedFramesToLose = 6;
 
     private InteractionTarget lastTarget;
-    private float lastTargetSeenTime;
-
+    private float lastTargetSwitchTime;
+    private int missedFrameCount;
+    private LayerMask interactionMask;
     private GameManager gameManager;
 
     public void Initialize(GameManager manager)
     {
+        if (gameManager != null && gameManager == manager)
+            return;
+
         gameManager = manager;
+
         if (playerCamera == null)
             playerCamera = Camera.main;
+
+        interactionMask = LayerMask.GetMask("Interactable");
     }
 
-    private void Update()
+    private void LateUpdate()
     {
         if (playerCamera == null || gameManager == null || gameManager.UIManager == null)
             return;
 
-        var target = GetCurrentTarget();
+        InteractionTarget detectedTarget = GetCurrentTarget();
 
-        if (target != null && target.CanInteract(gameManager.GameStateManager))
+        if (detectedTarget != null && detectedTarget.CanInteract(gameManager.GameStateManager))
         {
-            lastTarget = target;
-            lastTargetSeenTime = Time.time;
+            bool canSwitchTarget =
+                lastTarget == null ||
+                detectedTarget == lastTarget ||
+                Time.time - lastTargetSwitchTime >= targetSwitchDelay;
 
-            gameManager.UIManager.SetPrompt(target.PromptText);
+            if (canSwitchTarget)
+            {
+                if (lastTarget != detectedTarget)
+                    lastTargetSwitchTime = Time.time;
 
-            if (Input.GetKeyDown(interactKey))
-                PerformInteraction(target);
+                lastTarget = detectedTarget;
+            }
 
-            return;
+            missedFrameCount = 0;
+        }
+        else
+        {
+            missedFrameCount++;
         }
 
-        if (lastTarget != null && Time.time - lastTargetSeenTime < promptClearDelay)
+        bool targetLost = lastTarget == null
+            || !lastTarget.gameObject.activeInHierarchy
+            || missedFrameCount >= missedFramesToLose
+            || !lastTarget.CanInteract(gameManager.GameStateManager);
+
+        if (!targetLost)
         {
             gameManager.UIManager.SetPrompt(lastTarget.PromptText);
+
+            if (Input.GetKeyDown(interactKey))
+                PerformInteraction(lastTarget);
+
             return;
         }
 
-        lastTarget = null;
+        if (missedFrameCount >= missedFramesToLose)
+        {
+            missedFrameCount = 0;
+            lastTarget = null;
+        }
+
         gameManager.UIManager.SetPrompt(string.Empty);
     }
 
     private InteractionTarget GetCurrentTarget()
     {
-        if (!Physics.SphereCast(
-                playerCamera.transform.position,
-                interactRadius,
-                playerCamera.transform.forward,
-                out RaycastHit hit,
-                interactDistance,
-                interactionMask,
-                QueryTriggerInteraction.Collide))
-            return null;
+        // Прямой raycast по центру экрана
+        if (Physics.Raycast(
+            playerCamera.transform.position,
+            playerCamera.transform.forward,
+            out RaycastHit hit,
+            interactDistance,
+            interactionMask,
+            QueryTriggerInteraction.Collide))
+        {
+            InteractionTarget target = hit.collider.GetComponent<InteractionTarget>();
+            if (target != null)
+                return target;
+        }
 
-        return hit.collider.GetComponentInParent<InteractionTarget>();
+        // Fallback — SphereCast для объектов чуть в стороне от прицела
+        float radius = (lastTarget != null) ? keepAimRadius : allowedAimRadius;
+
+        RaycastHit[] hits = Physics.SphereCastAll(
+            playerCamera.transform.position,
+            radius,
+            playerCamera.transform.forward,
+            interactDistance,
+            interactionMask,
+            QueryTriggerInteraction.Collide
+        );
+
+        InteractionTarget bestTarget = null;
+        float bestDistance = float.MaxValue;
+
+        foreach (RaycastHit sphereHit in hits)
+        {
+            InteractionTarget target = sphereHit.collider.GetComponent<InteractionTarget>();
+            if (target == null)
+                continue;
+
+            if (sphereHit.distance < bestDistance)
+            {
+                bestDistance = sphereHit.distance;
+                bestTarget = target;
+            }
+        }
+
+        return bestTarget;
     }
 
     private void PerformInteraction(InteractionTarget target)
@@ -90,7 +155,7 @@ public class InteractionSystem : MonoBehaviour
             events.RaiseHintUnlocked(data.hintText, data.textDuration);
 
         if (!string.IsNullOrWhiteSpace(data.uiMessage))
-            events.RequestUiMessage(data.uiMessage);
+            events.RequestUiMessage(data.uiMessage, data.textDuration);
 
         if (!string.IsNullOrWhiteSpace(data.sfxId))
             events.RequestSfx(data.sfxId);
