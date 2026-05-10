@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -11,6 +12,7 @@ public class ChoiceSystem : MonoBehaviour
     [Header("Incident Timing")]
     [SerializeField] private float incidentDuration = 60f;
     [SerializeField] private float valveDuration = 9f;
+    [SerializeField] private float crisisThoughtDelay = 3f;
 
     [Header("Key Interaction IDs")]
     [SerializeField] private string startIncidentInteractionId = "incident_alarm";
@@ -20,10 +22,12 @@ public class ChoiceSystem : MonoBehaviour
     [SerializeField] private string enterValveActionId = "reach_valve";
     [SerializeField] private string valveCorrectActionId = "turn_valve_right";
     [SerializeField] private string valveWrongActionId = "turn_valve_left";
+    
 
     [Header("Thoughts")]
     [TextArea] [SerializeField] private string crisisThought = "Пожар... где перекрыть топливо?";
     [TextArea] [SerializeField] private string valveThought = "Нужно перекрыть подачу. У меня мало времени.";
+    [TextArea] [SerializeField] private string UIMessage = "";
 
     private readonly HashSet<string> knownFacts = new HashSet<string>();
     private readonly HashSet<string> usedOneShotThoughts = new HashSet<string>();
@@ -92,11 +96,23 @@ public class ChoiceSystem : MonoBehaviour
         events.StartIncidentTimer(incidentDuration);
         events.RequestVfx("crisis_fire");
         events.RequestSfx("alarm");
+        StartCoroutine(ShowCrisisThoughtDelayed());
         events.RequestVoice("incident_announcement");
-        events.RequestUiMessage("Авария в машинном отделении.");
-        events.RequestThought(crisisThought);
-        gameManager.TemperatureManager?.ApplyTemperatureDelta(20f);
+        
+        
     }
+    private IEnumerator ShowCrisisThoughtDelayed()
+{
+    yield return new WaitForSeconds(crisisThoughtDelay);
+
+    if (gameManager == null || gameManager.GameStateManager == null)
+        yield break;
+
+    if (gameManager.GameStateManager.Phase != GamePhase.Crisis)
+        yield break;
+    gameManager.EventManager?.RequestUiMessage(UIMessage);
+    gameManager.EventManager?.RequestThought(crisisThought);
+}
 
     private void ResolveCrisisPhase(string actionId)
     {

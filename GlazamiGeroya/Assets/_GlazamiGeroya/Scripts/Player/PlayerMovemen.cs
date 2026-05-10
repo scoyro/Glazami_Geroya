@@ -7,6 +7,12 @@ public class PlayerController : MonoBehaviour
     public float speed = 5f;
     public float gravity = -9.81f;
 
+    [Header("Sprint")]
+    [SerializeField] private KeyCode sprintKey = KeyCode.LeftShift;
+    [SerializeField] private float crisisSprintMultiplier = 1.8f;
+
+    private bool isCrisis;
+
     [Header("Mouse Look")]
     public Transform cameraTransform;
     public float mouseSensitivity = 200f;
@@ -50,6 +56,10 @@ public class PlayerController : MonoBehaviour
 
         if (upperBodyBone != null)
             upperBodyStartRotation = upperBodyBone.localRotation;
+    if (GameManager.Instance != null && GameManager.Instance.EventManager != null)
+{
+    GameManager.Instance.EventManager.OnCrisisModeChanged += SetCrisisMode;
+}
 
         defaultYPos = cameraTransform.localPosition.y;
     }
@@ -97,17 +107,23 @@ public class PlayerController : MonoBehaviour
 
         Vector3 move = (transform.right * moveX + transform.forward * moveZ).normalized;
 
-        controller.Move(move * speed * Time.deltaTime);
+        float currentSpeed = speed;
+
+        if (isCrisis && Input.GetKey(sprintKey))
+            currentSpeed *= crisisSprintMultiplier;
+
+        controller.Move(move * currentSpeed * Time.deltaTime);
 
         if (controller.isGrounded && velocity.y < 0)
-        {
             velocity.y = -2f;
-        }
 
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
     }
-
+    private void SetCrisisMode(bool enabled)
+    {
+        isCrisis = enabled;
+    }
     void HandleHeadBob()
     {
         bool isMoving = Mathf.Abs(moveX) > 0.1f || Mathf.Abs(moveZ) > 0.1f;
@@ -129,5 +145,10 @@ public class PlayerController : MonoBehaviour
             pos.y = Mathf.Lerp(pos.y, defaultYPos, Time.deltaTime * returnSpeed);
             cameraTransform.localPosition = pos;
         }
+    }
+    private void OnDestroy()
+    {
+        if (GameManager.Instance != null && GameManager.Instance.EventManager != null)
+            GameManager.Instance.EventManager.OnCrisisModeChanged -= SetCrisisMode;
     }
 }

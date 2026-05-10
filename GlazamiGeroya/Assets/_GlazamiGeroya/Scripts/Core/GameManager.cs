@@ -39,8 +39,11 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        Debug.Log($"GameManager Awake called on {gameObject.name}, Instance={(Instance == null ? "null" : Instance.gameObject.name)}, scene={gameObject.scene.name}");
+
         if (Instance != null && Instance != this)
         {
+            Debug.LogWarning($"DUPLICATE GameManager detected! Destroying {gameObject.name}");
             Destroy(gameObject);
             return;
         }
@@ -53,6 +56,11 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         Bootstrap();
+        // Add temporarily to GameManager.Start(), after Bootstrap()
+var allSystems = FindObjectsByType<InteractionSystem>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+Debug.Log($"InteractionSystem count: {allSystems.Length}");
+foreach (var s in allSystems)
+    Debug.Log($"  → {s.gameObject.name} | scene={s.gameObject.scene.name} | enabled={s.enabled}");
     }
 
     private void CacheManagers()
@@ -73,7 +81,6 @@ public class GameManager : MonoBehaviour
 
     public void Bootstrap()
     {
-        CacheManagers();
 
         eventManager?.Initialize(this);
         sceneController?.Initialize(this);

@@ -12,10 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a6e96f0421766e428d96b39808c73c8, type: 3}
   m_Name: IOFRoom_Temperature
   m_EditorClassIdentifier: Assembly-CSharp::TemperatureProfile
-  id: 
-  displayName: 
   targetTemperature: 35
-  dangerTemperature: 40
+  dangerTemperature: 50
   lethalTemperature: 80
   temperatureCurve:
     serializedVersion: 2
