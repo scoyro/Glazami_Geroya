@@ -1,10 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 /// <summary>
 /// HUD: подсказка, журнал, мысли героя, обучающие заметки и таймеры.
@@ -24,7 +25,14 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Slider temperatureSlider;
     [SerializeField] private TMP_Text temperatureValueText;
     [SerializeField] private Gradient temperatureTextGradient;
-    
+    [Header("Image Popup")]
+    [SerializeField] private GameObject imagePopupPanel;
+    [SerializeField] private Image popupImage;
+    [SerializeField] private List<UiImageEntry> imageEntries = new List<UiImageEntry>();
+
+    private readonly Dictionary<string, Sprite> imageMap = new Dictionary<string, Sprite>();
+    private Coroutine imageRoutine;
+
 
     [Header("Settings")]
     [SerializeField] private float startTemperature = 40f;
@@ -34,6 +42,7 @@ public class UIManager : MonoBehaviour
 
     public float CurrentTemperature { get; private set; }
 
+    private Coroutine messageRoutine;
     private GameManager gameManager;
     private Coroutine thoughtRoutine;
     private Coroutine hintRoutine;
@@ -53,6 +62,19 @@ public class UIManager : MonoBehaviour
         if (checklistPanel != null)
             checklistPanel.SetActive(false);
 
+        imageMap.Clear();
+
+        foreach (var entry in imageEntries)
+        {
+            if (entry == null || string.IsNullOrWhiteSpace(entry.id) || entry.sprite == null)
+                continue;
+
+            imageMap[entry.id] = entry.sprite;
+        }
+
+        if (imagePopupPanel != null)
+            imagePopupPanel.SetActive(false);
+
         if (gameManager?.EventManager != null)
         {
             gameManager.EventManager.OnUiMessageRequested -= SetMessage;
@@ -63,6 +85,8 @@ public class UIManager : MonoBehaviour
             gameManager.EventManager.OnValveTimerStarted -= StartValveTimer;
             gameManager.EventManager.OnTimersStopped -= StopCountdown;
 
+            gameManager.EventManager.OnImageRequested -= ShowImage;
+            gameManager.EventManager.OnImageRequested += ShowImage;
             gameManager.EventManager.OnUiMessageRequested += SetMessage;
             gameManager.EventManager.OnThoughtRequested += ShowThought;
             gameManager.EventManager.OnHintUnlocked += ShowHint;
@@ -71,6 +95,7 @@ public class UIManager : MonoBehaviour
             gameManager.EventManager.OnValveTimerStarted += StartValveTimer;
             gameManager.EventManager.OnTimersStopped += StopCountdown;
         }
+
     }
 
     private void Update()
@@ -87,16 +112,30 @@ public class UIManager : MonoBehaviour
         if (countdownRemaining <= 0f)
             timerRunning = false;
     }
-
+    private string currentPrompt;
     public void SetPrompt(string text)
     {
-        if (promptText != null)
-            promptText.text = text;
+        if (promptText == null)
+            return;
+
+        if (currentPrompt == text)
+            return;
+
+        currentPrompt = text;
+        promptText.text = text;
     }
 
-    public void SetMessage(string text)
+    public void SetMessage(string text, float duration = 4f)
     {
-        if (messageText != null)
+        if (messageText == null)
+            return;
+
+        if (messageRoutine != null)
+            StopCoroutine(messageRoutine);
+
+        if (duration > 0f)
+            messageRoutine = StartCoroutine(ShowTimedMessage(text, duration));
+        else
             messageText.text = text;
     }
 
@@ -177,6 +216,13 @@ public class UIManager : MonoBehaviour
             ShowTypedText(thoughtText, text, thoughtTypingSpeed, finalDuration)
         );
     }
+    private IEnumerator ShowTimedMessage(string text, float duration)
+    {
+        messageText.text = text;
+        yield return new WaitForSeconds(duration);
+        messageText.text = string.Empty;
+        messageRoutine = null;
+    }
     private IEnumerator ShowTypedText(TMP_Text target, string text, float typingSpeed, float visibleDuration)
     {
         target.text = string.Empty;
@@ -245,6 +291,40 @@ public class UIManager : MonoBehaviour
             temperatureSlider.value = CurrentTemperature / maxTemperature;
     }
 
+    public void ShowImage(string imageId, float duration = 4f)
+    {
+        if (string.IsNullOrWhiteSpace(imageId))
+            return;
+
+        if (popupImage == null || imagePopupPanel == null)
+            return;
+
+        if (!imageMap.TryGetValue(imageId, out var sprite) || sprite == null)
+        {
+            Debug.LogWarning($"UIManager: imageId '{imageId}' не найден в imageEntries.");
+            return;
+        }
+
+        if (imageRoutine != null)
+            StopCoroutine(imageRoutine);
+
+        imageRoutine = StartCoroutine(ShowImageRoutine(sprite, duration));
+    }
+
+    private IEnumerator ShowImageRoutine(Sprite sprite, float duration)
+    {
+        popupImage.sprite = sprite;
+        popupImage.preserveAspect = true;
+
+        imagePopupPanel.SetActive(true);
+
+        yield return new WaitForSeconds(Mathf.Max(0.1f, duration));
+
+        imagePopupPanel.SetActive(false);
+        popupImage.sprite = null;
+        imageRoutine = null;
+    }
+
     private void OnDestroy()
     {
         if (gameManager?.EventManager == null) return;
@@ -256,5 +336,12 @@ public class UIManager : MonoBehaviour
         gameManager.EventManager.OnIncidentTimerStarted -= StartIncidentTimer;
         gameManager.EventManager.OnValveTimerStarted -= StartValveTimer;
         gameManager.EventManager.OnTimersStopped -= StopCountdown;
+        gameManager.EventManager.OnImageRequested -= ShowImage;
+    }
+    [Serializable]
+    public class UiImageEntry
+    {
+        public string id;
+        public Sprite sprite;
     }
 }

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Corridor_Temperature
   m_EditorClassIdentifier: Assembly-CSharp::TemperatureProfile
   targetTemperature: 32
-  dangerTemperature: 40
+  dangerTemperature: 50
   lethalTemperature: 80
   temperatureCurve:
     serializedVersion: 2
