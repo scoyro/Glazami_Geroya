@@ -10,18 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a6dd5c31d52aee64f804880ff9e0285a, type: 3}
-  m_Name: Pipes
+  m_Name: Work Noises
   m_EditorClassIdentifier: Assembly-CSharp::RandomAudioConfig
   clips:
-  - {fileID: 8300000, guid: 4888c501b1be24642991ab2e2dbff286, type: 3}
-  minDelay: 10
-  maxDelay: 15
+  - {fileID: 8300000, guid: 5ce69b744e5321e4393851cd7b435795, type: 3}
+  - {fileID: 8300000, guid: 50df6f1f6bbb5bb44b903da20870e048, type: 3}
+  - {fileID: 8300000, guid: 2905786f3ca1d56488293b03d3982f59, type: 3}
+  minDelay: 7
+  maxDelay: 10
   use3DSound: 1
   playOnStart: 1
   loopRandomly: 1
-  volume: 0.525
+  volume: 0.353
   fadeInDuration: 1
-  fadeOutDuration: 0.5
+  fadeOutDuration: 1
   minDistance: 1
   maxDistance: 15
   rolloffMode: 1

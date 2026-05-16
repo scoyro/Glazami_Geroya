@@ -14,16 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RandomAudioConfig
   clips:
   - {fileID: 8300000, guid: 34ff1971092f8d84ca72e553d5c45d60, type: 3}
-  - {fileID: 8300000, guid: 27b0d1d76fd794d4994f3960dfad6c62, type: 3}
   - {fileID: 8300000, guid: b209f9b66a5ec2643a61a4f05110bf37, type: 3}
   minDelay: 30
   maxDelay: 40
   use3DSound: 1
   playOnStart: 1
   loopRandomly: 1
-  volume: 0.551
-  fadeInDuration: 0.2
-  fadeOutDuration: 0.5
+  volume: 0.198
+  fadeInDuration: 1
+  fadeOutDuration: 1
   minDistance: 1
-  maxDistance: 30
+  maxDistance: 15
   rolloffMode: 1
