@@ -8,10 +8,12 @@ public class RandomAudioConfig : ScriptableObject
 {
     [Header("Clips")]
     public AudioClip[] clips;
+    
 
     [Header("Timing")]
     public float minDelay = 3f;
     public float maxDelay = 10f;
+    
 
     [Header("Playback")]
     public bool use3DSound = true;
@@ -25,7 +27,7 @@ public class RandomAudioConfig : ScriptableObject
     [Header("Fade")]
     public float fadeInDuration = 0.2f;
     public float fadeOutDuration = 0.5f;
-    
+
     [Header("3D Distance")]
     public float minDistance = 1f;
     public float maxDistance = 15f;

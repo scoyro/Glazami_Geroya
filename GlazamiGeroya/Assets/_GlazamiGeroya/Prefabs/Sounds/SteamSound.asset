@@ -25,8 +25,8 @@ MonoBehaviour:
   playOnStart: 1
   loopRandomly: 1
   volume: 0.692
-  fadeInDuration: 0.2
-  fadeOutDuration: 0.5
+  fadeInDuration: 0.1
+  fadeOutDuration: 0.3
   minDistance: 0
   maxDistance: 3
   rolloffMode: 1

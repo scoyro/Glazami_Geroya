@@ -119,6 +119,52 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &4969957
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4969958}
+  - component: {fileID: 4969959}
+  m_Layer: 0
+  m_Name: SteamSound (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4969958
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4969957}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -33.82, y: 0.977, z: 9.36}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1857809445}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4969959
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4969957}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49f7fd5290bd92f4298ffedeb7b58d2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RandomAudioEmitter
+  config: {fileID: 11400000, guid: 48ccf4fe30720864e8b598a6a6fd12c5, type: 2}
+  waitUntilClipEnds: 1
 --- !u!1 &14334837
 GameObject:
   m_ObjectHideFlags: 0
@@ -195,6 +241,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RandomAudioEmitter
   config: {fileID: 11400000, guid: 48ccf4fe30720864e8b598a6a6fd12c5, type: 2}
+  waitUntilClipEnds: 1
 --- !u!1 &126859990
 GameObject:
   m_ObjectHideFlags: 0
@@ -1383,6 +1430,52 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   requiredCompletedTaskId: 
+--- !u!1 &389207049
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 389207050}
+  - component: {fileID: 389207051}
+  m_Layer: 0
+  m_Name: SteamSound (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &389207050
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 389207049}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -40.74, y: 2.99, z: 14.05}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1857809445}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &389207051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 389207049}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49f7fd5290bd92f4298ffedeb7b58d2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RandomAudioEmitter
+  config: {fileID: 11400000, guid: 48ccf4fe30720864e8b598a6a6fd12c5, type: 2}
+  waitUntilClipEnds: 1
 --- !u!1 &397187035
 GameObject:
   m_ObjectHideFlags: 0
@@ -1868,7 +1961,7 @@ MonoBehaviour:
     imageDuration: 0
     textDelay: 0
   disableAfterUse: 1
-  interactionClip: {fileID: 0}
+  interactionClip: {fileID: 8300000, guid: 2e732ec8eae124a41b2bb36a441aa72b, type: 3}
   use3DSound: 1
   onInteract:
     m_PersistentCalls:
@@ -2277,7 +2370,7 @@ MonoBehaviour:
     imageDuration: 0
     textDelay: 0
   disableAfterUse: 0
-  interactionClip: {fileID: 0}
+  interactionClip: {fileID: 8300000, guid: 2e732ec8eae124a41b2bb36a441aa72b, type: 3}
   use3DSound: 1
   onInteract:
     m_PersistentCalls:
@@ -3431,7 +3524,7 @@ AudioSource:
   Spatialize: 0
   SpatializePostEffects: 0
   Priority: 128
-  DopplerLevel: 1
+  DopplerLevel: 0
   MinDistance: 1
   MaxDistance: 500
   Pan2D: 0
@@ -5325,7 +5418,7 @@ MonoBehaviour:
   checklistManager: {fileID: 1328480480}
   uiManager: {fileID: 1385915418}
   vfxController: {fileID: 1119824349}
-  audioManager: {fileID: 0}
+  audioManager: {fileID: 2062135662}
   gameStateManager: {fileID: 597153747}
   endingController: {fileID: 1266379236}
   temperatureVFXController: {fileID: 634459573}
@@ -6798,6 +6891,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RandomAudioEmitter
   config: {fileID: 11400000, guid: da131e30a0815da4ea758e5b8841cb2c, type: 2}
+  waitUntilClipEnds: 1
 --- !u!1 &1477918207
 GameObject:
   m_ObjectHideFlags: 0
@@ -7275,6 +7369,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RandomAudioEmitter
   config: {fileID: 11400000, guid: da131e30a0815da4ea758e5b8841cb2c, type: 2}
+  waitUntilClipEnds: 1
 --- !u!1 &1710502660
 GameObject:
   m_ObjectHideFlags: 0
@@ -8186,6 +8281,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RandomAudioEmitter
   config: {fileID: 11400000, guid: 627c35a2a29ee464a82a304add4763f4, type: 2}
+  waitUntilClipEnds: 1
 --- !u!1 &1840435438
 GameObject:
   m_ObjectHideFlags: 0
@@ -8614,6 +8710,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 77397643}
+  - {fileID: 4969958}
+  - {fileID: 389207050}
   - {fileID: 1475859272}
   - {fileID: 1704060924}
   - {fileID: 1825382493}
@@ -8681,8 +8779,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: ce4dc5b41ccc13e4bbfb3e27e7bd70fd, type: 2}
+  m_sharedMaterial: {fileID: -3999461870854327948, guid: ce4dc5b41ccc13e4bbfb3e27e7bd70fd, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -8826,7 +8924,7 @@ MonoBehaviour:
     imageDuration: 0
     textDelay: 0
   disableAfterUse: 1
-  interactionClip: {fileID: 0}
+  interactionClip: {fileID: 8300000, guid: 2e732ec8eae124a41b2bb36a441aa72b, type: 3}
   use3DSound: 1
   onInteract:
     m_PersistentCalls:
@@ -9133,8 +9231,6 @@ MonoBehaviour:
   ambienceSource: {fileID: 1067538359}
   sfx2DSource: {fileID: 691926610}
   voiceSource: {fileID: 0}
-  minDistance: 0
-  maxDistance: 1
   startAmbienceClip: {fileID: 8300000, guid: 3e6e6a18af64ccf4f896f3876a5e06e4, type: 3}
   playAmbienceOnStart: 1
 --- !u!4 &2062135663
@@ -9198,6 +9294,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RandomAudioEmitter
   config: {fileID: 11400000, guid: 126009cb1d48d9148b89c8d40fea3154, type: 2}
+  waitUntilClipEnds: 1
 --- !u!1 &2093035520
 GameObject:
   m_ObjectHideFlags: 0

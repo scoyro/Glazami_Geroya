@@ -69,7 +69,7 @@ Assets/
    ProcefuralAnimation.cs
    TeleportTrigger.cs
   Systems/
-   AtmosphereManager.cs
+   AudioManager.cs
    ChecklistManager.cs
    ChoiceSystem.cs
    EndingController.cs

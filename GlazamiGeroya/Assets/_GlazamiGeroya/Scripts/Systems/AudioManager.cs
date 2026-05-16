@@ -10,9 +10,6 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioSource sfx2DSource;
     [SerializeField] private AudioSource voiceSource;
 
-    [Header("3D Sound Settings")]
-    [SerializeField] private float minDistance = 1f;
-    [SerializeField] private float maxDistance = 20f;
 
 
     [Header("Ambience")]
