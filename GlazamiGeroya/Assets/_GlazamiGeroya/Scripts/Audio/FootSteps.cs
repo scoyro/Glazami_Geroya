@@ -6,7 +6,7 @@ public class FootstepController : MonoBehaviour
     [Header("References")]
     [SerializeField] private AudioSource footstepSource;
 
-    [Header("Clips")]
+    [Header("Clips In Order")]
     [SerializeField] private AudioClip[] footstepClips;
 
     [Header("Movement Detection")]
@@ -18,15 +18,15 @@ public class FootstepController : MonoBehaviour
     [SerializeField] private float sprintStepInterval = 0.34f;
     [SerializeField] private KeyCode sprintKey = KeyCode.LeftShift;
 
-    [Header("Randomization")]
-    [SerializeField] private Vector2 pitchRange = new Vector2(0.92f, 1.08f);
-    [SerializeField] private Vector2 volumeRange = new Vector2(0.65f, 0.85f);
+    [Header("Playback")]
+    [SerializeField, Range(0f, 1f)] private float volume = 0.8f;
+    [SerializeField] private bool sprintOnlyInCrisis = true;
 
     private CharacterController controller;
     private Vector3 lastPosition;
     private float stepTimer;
     private bool isCrisis;
-    private int lastClipIndex = -1;
+    private int currentClipIndex;
 
     private void Awake()
     {
@@ -46,6 +46,7 @@ public class FootstepController : MonoBehaviour
 
         lastPosition = transform.position;
         stepTimer = walkStepInterval;
+        currentClipIndex = 0;
     }
 
     private void OnEnable()
@@ -75,7 +76,7 @@ public class FootstepController : MonoBehaviour
 
         if (!shouldPlaySteps)
         {
-            stepTimer = Mathf.Min(stepTimer, walkStepInterval);
+            stepTimer = Mathf.Min(stepTimer, GetStepInterval());
             lastPosition = transform.position;
             return;
         }
@@ -84,7 +85,7 @@ public class FootstepController : MonoBehaviour
 
         if (stepTimer <= 0f)
         {
-            PlayFootstep();
+            PlayNextFootstep();
             stepTimer = GetStepInterval();
         }
 
@@ -98,6 +99,7 @@ public class FootstepController : MonoBehaviour
 
         float inputX = Input.GetAxisRaw("Horizontal");
         float inputZ = Input.GetAxisRaw("Vertical");
+
         bool hasMoveInput = new Vector2(inputX, inputZ).sqrMagnitude >= minInputAmount * minInputAmount;
 
         if (!hasMoveInput)
@@ -113,40 +115,35 @@ public class FootstepController : MonoBehaviour
 
     private float GetStepInterval()
     {
-        bool sprinting = isCrisis && Input.GetKey(sprintKey);
+        bool sprinting;
 
-        return sprinting
-            ? sprintStepInterval
-            : walkStepInterval;
+        if (sprintOnlyInCrisis)
+            sprinting = isCrisis && Input.GetKey(sprintKey);
+        else
+            sprinting = Input.GetKey(sprintKey);
+
+        return sprinting ? sprintStepInterval : walkStepInterval;
     }
 
-    private void PlayFootstep()
+    private void PlayNextFootstep()
     {
-        int clipIndex = GetRandomClipIndex();
-        AudioClip clip = footstepClips[clipIndex];
+        AudioClip clip = footstepClips[currentClipIndex];
+
+        AdvanceClipIndex();
 
         if (clip == null)
             return;
 
-        lastClipIndex = clipIndex;
-
-        footstepSource.pitch = Random.Range(pitchRange.x, pitchRange.y);
-        footstepSource.PlayOneShot(clip, Random.Range(volumeRange.x, volumeRange.y));
+        footstepSource.pitch = 1f;
+        footstepSource.PlayOneShot(clip, volume);
     }
 
-    private int GetRandomClipIndex()
+    private void AdvanceClipIndex()
     {
-        if (footstepClips.Length == 1)
-            return 0;
+        currentClipIndex++;
 
-        int index;
-        do
-        {
-            index = Random.Range(0, footstepClips.Length);
-        }
-        while (index == lastClipIndex);
-
-        return index;
+        if (currentClipIndex >= footstepClips.Length)
+            currentClipIndex = 0;
     }
 
     private void TrySubscribe()

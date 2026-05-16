@@ -1961,7 +1961,7 @@ MonoBehaviour:
     imageDuration: 0
     textDelay: 0
   disableAfterUse: 1
-  interactionClip: {fileID: 8300000, guid: 2e732ec8eae124a41b2bb36a441aa72b, type: 3}
+  interactionClip: {fileID: 8300000, guid: 29227e9648cf6fe48a831de6cf21661c, type: 3}
   use3DSound: 1
   onInteract:
     m_PersistentCalls:
@@ -3563,7 +3563,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 0
-  m_Volume: 1
+  m_Volume: 0.511
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -5109,7 +5109,7 @@ AudioSource:
   Spatialize: 0
   SpatializePostEffects: 0
   Priority: 128
-  DopplerLevel: 1
+  DopplerLevel: 0
   MinDistance: 1
   MaxDistance: 500
   Pan2D: 0
@@ -7584,7 +7584,7 @@ MonoBehaviour:
     imageDuration: 0
     textDelay: 0
   disableAfterUse: 1
-  interactionClip: {fileID: 0}
+  interactionClip: {fileID: 8300000, guid: 29227e9648cf6fe48a831de6cf21661c, type: 3}
   use3DSound: 1
   onInteract:
     m_PersistentCalls:
@@ -8621,14 +8621,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FootstepController
   footstepSource: {fileID: 0}
   footstepClips:
-  - {fileID: 8300000, guid: cdc2cd3101faab649a8ac9613fc9fe4f, type: 3}
+  - {fileID: 8300000, guid: d347f6b3ae668de4db5fdace6c61dcc7, type: 3}
+  - {fileID: 8300000, guid: 8b84ea278ee2ef74caf67d91ce95a06f, type: 3}
+  - {fileID: 8300000, guid: 821da76f7e358ec44aca0e2f8396193b, type: 3}
+  - {fileID: 8300000, guid: d33e9284e41d90a4ea7929a0b211315a, type: 3}
+  - {fileID: 8300000, guid: e9e79522cee54be4d9a138cc9cd05ba7, type: 3}
+  - {fileID: 8300000, guid: 9447a77e6f7b90c46ab0794350a8a44a, type: 3}
+  - {fileID: 8300000, guid: ce29a5ab4a3b90546ba5f6a9c1530e55, type: 3}
+  - {fileID: 8300000, guid: 4fdb13b7728ea634ab115a84f9eac528, type: 3}
+  - {fileID: 8300000, guid: d41bce0c326974242957534178581a5f, type: 3}
+  - {fileID: 8300000, guid: f5a0495e5c72e76418f8cc503fddc002, type: 3}
+  - {fileID: 8300000, guid: df05958fdf140b84fab4512b1c96dd07, type: 3}
+  - {fileID: 8300000, guid: f53c9b5de853bd94b833e7c381014fc0, type: 3}
   minInputAmount: 0.1
   minRealSpeed: 0.05
-  walkStepInterval: 0.7
+  walkStepInterval: 0.6
   sprintStepInterval: 0.4
   sprintKey: 304
-  pitchRange: {x: 0.92, y: 1.08}
-  volumeRange: {x: 0.2, y: 0.3}
+  volume: 1
+  sprintOnlyInCrisis: 1
 --- !u!82 &1846162273
 AudioSource:
   m_ObjectHideFlags: 0
@@ -8642,7 +8653,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 0
-  m_Volume: 0.028
+  m_Volume: 0.106
   m_Pitch: 1
   Loop: 1
   Mute: 0
@@ -8686,7 +8697,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 1
+      value: 0
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -8971,7 +8982,7 @@ MonoBehaviour:
     imageDuration: 0
     textDelay: 0
   disableAfterUse: 1
-  interactionClip: {fileID: 8300000, guid: 2e732ec8eae124a41b2bb36a441aa72b, type: 3}
+  interactionClip: {fileID: 8300000, guid: 29227e9648cf6fe48a831de6cf21661c, type: 3}
   use3DSound: 1
   onInteract:
     m_PersistentCalls:
