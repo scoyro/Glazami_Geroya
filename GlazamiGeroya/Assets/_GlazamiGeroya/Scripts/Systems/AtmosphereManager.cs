@@ -1,95 +1,186 @@
-using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 
-/// <summary>
-/// Атмосфера сцены: фон, сирены, системные звуки и мысли героя.
-/// </summary>
-public class AtmosphereManager : MonoBehaviour
+public class AudioManager : MonoBehaviour
 {
+    public static AudioManager Instance { get; private set; }
+
     [Header("Audio Sources")]
     [SerializeField] private AudioSource ambienceSource;
-    [SerializeField] private AudioSource sfxSource;
+    [SerializeField] private AudioSource sfx2DSource;
     [SerializeField] private AudioSource voiceSource;
 
-    [Header("Libraries")]
-    [SerializeField] private List<AudioEntry> sfxEntries = new List<AudioEntry>();
-    [SerializeField] private List<AudioEntry> voiceEntries = new List<AudioEntry>();
+    [Header("3D Sound Settings")]
+    [SerializeField] private float minDistance = 1f;
+    [SerializeField] private float maxDistance = 20f;
 
-    private readonly Dictionary<string, AudioClip> sfxMap = new Dictionary<string, AudioClip>();
-    private readonly Dictionary<string, AudioClip> voiceMap = new Dictionary<string, AudioClip>();
-    private GameManager gameManager;
 
-    public void Initialize(GameManager manager)
+    [Header("Ambience")]
+    [SerializeField] private AudioClip startAmbienceClip;
+    [SerializeField] private bool playAmbienceOnStart = true;
+
+    private void Start()
     {
-        gameManager = manager;
-        BuildMap(sfxEntries, sfxMap);
-        BuildMap(voiceEntries, voiceMap);
+        if (playAmbienceOnStart && startAmbienceClip != null)
+            SetAmbience(startAmbienceClip);
+    }
 
-        if (gameManager?.EventManager != null)
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
         {
-            gameManager.EventManager.OnSfxRequested -= PlaySfx;
-            gameManager.EventManager.OnVoiceRequested -= PlayVoice;
-            gameManager.EventManager.OnCrisisModeChanged -= HandleCrisisMode;
-
-            gameManager.EventManager.OnSfxRequested += PlaySfx;
-            gameManager.EventManager.OnVoiceRequested += PlayVoice;
-            gameManager.EventManager.OnCrisisModeChanged += HandleCrisisMode;
+            Destroy(gameObject);
+            return;
         }
+
+        Instance = this;
     }
 
     public void SetAmbience(AudioClip clip, bool loop = true)
     {
-        if (ambienceSource == null || clip == null) return;
+        if (ambienceSource == null || clip == null)
+            return;
 
         ambienceSource.clip = clip;
         ambienceSource.loop = loop;
+        ambienceSource.spatialBlend = 0f;
         ambienceSource.Play();
     }
 
-    public void PlaySfx(string id)
-    {
-        if (sfxSource == null || !sfxMap.TryGetValue(id, out var clip) || clip == null) return;
-        sfxSource.PlayOneShot(clip);
-    }
+    public void Play2D(
+    AudioClip clip,
+    float volume = 1f,
+    float fadeInDuration = 0f,
+    float fadeOutDuration = 0f)
+{
+    if (clip == null)
+        return;
 
-    public void PlayVoice(string id)
+    GameObject soundObject = new GameObject("2D Audio");
+    soundObject.transform.SetParent(transform);
+
+    AudioSource source = soundObject.AddComponent<AudioSource>();
+
+    source.clip = clip;
+    source.volume = 0f;
+    source.spatialBlend = 0f;
+
+    source.Play();
+
+    StartCoroutine(PlayWithFade(source, volume, fadeInDuration, fadeOutDuration));
+
+    Destroy(soundObject, clip.length + 0.1f);
+}
+
+
+    public void PlayVoice(AudioClip clip)
     {
-        if (voiceSource == null || !voiceMap.TryGetValue(id, out var clip) || clip == null) return;
+        if (voiceSource == null || clip == null)
+            return;
+
+        voiceSource.spatialBlend = 0f;
         voiceSource.clip = clip;
         voiceSource.Play();
     }
 
-    private void HandleCrisisMode(bool enabled)
+        public void Play3D(
+    AudioClip clip,
+    Vector3 position,
+    float volume = 1f,
+    float minDistance = 1f,
+    float maxDistance = 20f,
+    AudioRolloffMode rolloffMode = AudioRolloffMode.Linear,
+    float fadeInDuration = 0f,
+    float fadeOutDuration = 0f)
     {
-        if (!enabled) return;
-        PlaySfx("alarm");
+        if (clip == null)
+            return;
+
+        GameObject soundObject = new GameObject("3D Audio");
+        soundObject.transform.position = position;
+
+        AudioSource source = soundObject.AddComponent<AudioSource>();
+
+        source.clip = clip;
+        source.volume = 0f;
+        source.spatialBlend = 1f;
+        source.minDistance = minDistance;
+        source.maxDistance = maxDistance;
+        source.rolloffMode = rolloffMode;
+
+        source.Play();
+
+        StartCoroutine(PlayWithFade(source, volume, fadeInDuration, fadeOutDuration));
+
+        Destroy(soundObject, clip.length + 0.1f);
     }
-
-    private void BuildMap(List<AudioEntry> source, Dictionary<string, AudioClip> map)
+    private IEnumerator PlayWithFade(
+        AudioSource source,
+        float targetVolume,
+        float fadeInDuration,
+        float fadeOutDuration)
     {
-        map.Clear();
+        if (source == null || source.clip == null)
+            yield break;
 
-        foreach (var entry in source)
+        float clipLength = source.clip.length;
+
+        fadeInDuration = Mathf.Max(0f, fadeInDuration);
+        fadeOutDuration = Mathf.Max(0f, fadeOutDuration);
+
+        float totalFadeDuration = fadeInDuration + fadeOutDuration;
+
+        if (totalFadeDuration > clipLength)
         {
-            if (entry == null || string.IsNullOrWhiteSpace(entry.id) || entry.clip == null)
-                continue;
-
-            map[entry.id] = entry.clip;
+            float scale = clipLength / totalFadeDuration;
+            fadeInDuration *= scale;
+            fadeOutDuration *= scale;
         }
-    }
 
-    private void OnDestroy()
+        if (fadeInDuration > 0f)
+        {
+            float timer = 0f;
+
+            while (timer < fadeInDuration)
+            {
+                if (source == null)
+                    yield break;
+
+                timer += Time.deltaTime;
+                source.volume = Mathf.Lerp(0f, targetVolume, timer / fadeInDuration);
+                yield return null;
+            }
+        }
+
+        if (source != null)
+            source.volume = targetVolume;
+
+        float normalPlayTime = clipLength - fadeInDuration - fadeOutDuration;
+
+        if (normalPlayTime > 0f)
+            yield return new WaitForSeconds(normalPlayTime);
+
+        if (fadeOutDuration > 0f)
+        {
+            float timer = 0f;
+            float startVolume = source != null ? source.volume : 0f;
+
+            while (timer < fadeOutDuration)
+            {
+                if (source == null)
+                    yield break;
+
+                timer += Time.deltaTime;
+                source.volume = Mathf.Lerp(startVolume, 0f, timer / fadeOutDuration);
+                yield return null;
+            }
+        }
+
+        if (source != null)
+            source.volume = 0f;
+    }
+    public void Initialize(GameManager manager)
     {
-        if (gameManager?.EventManager == null) return;
-        gameManager.EventManager.OnSfxRequested -= PlaySfx;
-        gameManager.EventManager.OnVoiceRequested -= PlayVoice;
-        gameManager.EventManager.OnCrisisModeChanged -= HandleCrisisMode;
+        // Пока можно оставить пустым.
     }
-}
-
-[System.Serializable]
-public class AudioEntry
-{
-    public string id;
-    public AudioClip clip;
 }

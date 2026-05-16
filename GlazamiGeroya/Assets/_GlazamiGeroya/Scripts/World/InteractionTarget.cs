@@ -14,6 +14,10 @@ public class InteractionTarget : MonoBehaviour
     [SerializeField] private InteractionData interactionData;
     [SerializeField] private bool disableAfterUse;
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip interactionClip;
+    [SerializeField] private bool use3DSound = true;
+
     [Header("Events")]
     [SerializeField] private UnityEvent onInteract;
 
@@ -54,6 +58,15 @@ public class InteractionTarget : MonoBehaviour
             return;
 
         wasUsed = true;
+
+        if (interactionClip != null && AudioManager.Instance != null)
+        {
+            if (use3DSound)
+                AudioManager.Instance.Play3D(interactionClip, transform.position);
+            else
+                AudioManager.Instance.Play2D(interactionClip);
+        }
+
         onInteract?.Invoke();
     }
 }

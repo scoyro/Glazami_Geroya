@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6dd5c31d52aee64f804880ff9e0285a, type: 3}
+  m_Name: ControlPanel
+  m_EditorClassIdentifier: Assembly-CSharp::RandomAudioConfig
+  clips:
+  - {fileID: 8300000, guid: a5fee6585f67cbe479a46563e0e915e9, type: 3}
+  - {fileID: 8300000, guid: 123590ea1af087f44a8de3ddc26bf366, type: 3}
+  - {fileID: 8300000, guid: e5815c649b8649c4a97b6c85bfa990d2, type: 3}
+  - {fileID: 8300000, guid: 19e1642ec02579e44ac302abec2b1d8b, type: 3}
+  - {fileID: 8300000, guid: e430ead4271e348479b1051531b5218f, type: 3}
+  - {fileID: 8300000, guid: b62b76119ca7fc441b77451e5ef3d0d3, type: 3}
+  minDelay: 3
+  maxDelay: 9
+  use3DSound: 1
+  playOnStart: 1
+  loopRandomly: 1
+  volume: 0.338
+  fadeInDuration: 0.2
+  fadeOutDuration: 0.5
+  minDistance: 1
+  maxDistance: 4
+  rolloffMode: 1
