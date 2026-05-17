@@ -53,6 +53,7 @@ TemporaryDependencyNodeTargetIdentifier=netstandard2.1
 Assets/
  TutorialInfo/Scripts/Readme.cs
  _GlazamiGeroya/Scripts/Audio/
+  AudioDucker.cs
   FootSteps.cs
   RandomSounds.cs
   SoundEmitter.cs
@@ -69,6 +70,7 @@ Assets/
    ProcefuralAnimation.cs
    TeleportTrigger.cs
   Systems/
+   ACT2.cs
    AudioManager.cs
    ChecklistManager.cs
    ChoiceSystem.cs
