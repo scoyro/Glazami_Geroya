@@ -66,6 +66,7 @@ Assets/
  _GlazamiGeroya/Scripts/
   JOURNAL_UI&Scripts/Scripts/TakeJournal.cs
   Player/
+   MovementBlock.cs
    PlayerMovemen.cs
    ProcefuralAnimation.cs
    TeleportTrigger.cs

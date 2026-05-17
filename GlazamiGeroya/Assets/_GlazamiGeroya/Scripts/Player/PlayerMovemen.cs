@@ -20,7 +20,6 @@ public class PlayerController : MonoBehaviour
     public float maxY = 90f;
 
     [Header("Body Look")]
-    
     [SerializeField] private Transform headBone;
     [SerializeField] private Transform upperBodyBone;
 
@@ -45,9 +44,14 @@ public class PlayerController : MonoBehaviour
     private float moveX;
     private float moveZ;
 
-    void Start()
+    private bool controlsLocked;
+
+    public bool ControlsLocked => controlsLocked;
+
+    private void Start()
     {
         controller = GetComponent<CharacterController>();
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
@@ -56,40 +60,66 @@ public class PlayerController : MonoBehaviour
 
         if (upperBodyBone != null)
             upperBodyStartRotation = upperBodyBone.localRotation;
-    if (GameManager.Instance != null && GameManager.Instance.EventManager != null)
-{
-    GameManager.Instance.EventManager.OnCrisisModeChanged += SetCrisisMode;
-}
 
-        defaultYPos = cameraTransform.localPosition.y;
+        if (GameManager.Instance != null && GameManager.Instance.EventManager != null)
+            GameManager.Instance.EventManager.OnCrisisModeChanged += SetCrisisMode;
+
+        if (cameraTransform != null)
+            defaultYPos = cameraTransform.localPosition.y;
     }
 
-    void Update()
+    private void Update()
     {
-        Look();
+        if (!controlsLocked)
+            Look();
+
         Move();
-        HandleHeadBob();
+
+        if (!controlsLocked)
+            HandleHeadBob();
+        else
+            ResetHeadBob();
     }
-    void LateUpdate()
+
+    private void LateUpdate()
     {
         UpdateBodyLook();
     }
-    void UpdateBodyLook()
-{
-    if (headBone != null)
+
+    public void LockControls()
     {
-        Quaternion targetHeadRotation = headStartRotation * Quaternion.Euler(xRotation * headFollowAmount, 0f, 0f);
-        headBone.localRotation = Quaternion.Lerp(headBone.localRotation, targetHeadRotation, Time.deltaTime * 10f);
+        controlsLocked = true;
+
+        moveX = 0f;
+        moveZ = 0f;
+        timer = 0f;
     }
 
-    if (upperBodyBone != null)
+    public void UnlockControls()
     {
-        Quaternion targetBodyRotation = upperBodyStartRotation * Quaternion.Euler(xRotation * bodyFollowAmount, 0f, 0f);
-        upperBodyBone.localRotation = Quaternion.Lerp(upperBodyBone.localRotation, targetBodyRotation, Time.deltaTime * 6f);
+        controlsLocked = false;
     }
-}
-    void Look()
+
+    private void UpdateBodyLook()
     {
+        if (headBone != null)
+        {
+            Quaternion targetHeadRotation = headStartRotation * Quaternion.Euler(xRotation * headFollowAmount, 0f, 0f);
+            headBone.localRotation = Quaternion.Lerp(headBone.localRotation, targetHeadRotation, Time.deltaTime * 10f);
+        }
+
+        if (upperBodyBone != null)
+        {
+            Quaternion targetBodyRotation = upperBodyStartRotation * Quaternion.Euler(xRotation * bodyFollowAmount, 0f, 0f);
+            upperBodyBone.localRotation = Quaternion.Lerp(upperBodyBone.localRotation, targetBodyRotation, Time.deltaTime * 6f);
+        }
+    }
+
+    private void Look()
+    {
+        if (cameraTransform == null)
+            return;
+
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
 
@@ -100,32 +130,46 @@ public class PlayerController : MonoBehaviour
         transform.Rotate(Vector3.up * mouseX);
     }
 
-    void Move()
+    private void Move()
     {
-        moveX = Input.GetAxis("Horizontal");
-        moveZ = Input.GetAxis("Vertical");
+        if (controlsLocked)
+        {
+            moveX = 0f;
+            moveZ = 0f;
+        }
+        else
+        {
+            moveX = Input.GetAxis("Horizontal");
+            moveZ = Input.GetAxis("Vertical");
+        }
 
         Vector3 move = (transform.right * moveX + transform.forward * moveZ).normalized;
 
         float currentSpeed = speed;
 
-        if (isCrisis && Input.GetKey(sprintKey))
+        if (!controlsLocked && isCrisis && Input.GetKey(sprintKey))
             currentSpeed *= crisisSprintMultiplier;
 
         controller.Move(move * currentSpeed * Time.deltaTime);
 
-        if (controller.isGrounded && velocity.y < 0)
+        if (controller.isGrounded && velocity.y < 0f)
             velocity.y = -2f;
 
         velocity.y += gravity * Time.deltaTime;
+
         controller.Move(velocity * Time.deltaTime);
     }
+
     private void SetCrisisMode(bool enabled)
     {
         isCrisis = enabled;
     }
-    void HandleHeadBob()
+
+    private void HandleHeadBob()
     {
+        if (cameraTransform == null)
+            return;
+
         bool isMoving = Mathf.Abs(moveX) > 0.1f || Mathf.Abs(moveZ) > 0.1f;
 
         if (isMoving && controller.isGrounded)
@@ -139,13 +183,22 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            timer = 0f;
-
-            Vector3 pos = cameraTransform.localPosition;
-            pos.y = Mathf.Lerp(pos.y, defaultYPos, Time.deltaTime * returnSpeed);
-            cameraTransform.localPosition = pos;
+            ResetHeadBob();
         }
     }
+
+    private void ResetHeadBob()
+    {
+        if (cameraTransform == null)
+            return;
+
+        timer = 0f;
+
+        Vector3 pos = cameraTransform.localPosition;
+        pos.y = Mathf.Lerp(pos.y, defaultYPos, Time.deltaTime * returnSpeed);
+        cameraTransform.localPosition = pos;
+    }
+
     private void OnDestroy()
     {
         if (GameManager.Instance != null && GameManager.Instance.EventManager != null)
