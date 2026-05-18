@@ -47,6 +47,12 @@ public class PlayerController : MonoBehaviour
     private bool controlsLocked;
 
     public bool ControlsLocked => controlsLocked;
+    private bool cameraExternallyControlled;
+
+    public void SetCameraExternallyControlled(bool value)
+    {
+        cameraExternallyControlled = value;
+    }
 
     private void Start()
     {
@@ -70,22 +76,32 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        if (!controlsLocked)
+        if (!controlsLocked && !cameraExternallyControlled)
+        {
             Look();
+        }
 
         Move();
 
-        if (!controlsLocked)
-            HandleHeadBob();
-        else
-            ResetHeadBob();
-    }
+        if (cameraExternallyControlled)
+            return;
 
+        if (!controlsLocked)
+        {
+            HandleHeadBob();
+        }
+        else
+        {
+            ResetHeadBob();
+        }
+    }
     private void LateUpdate()
     {
+        if (controlsLocked || cameraExternallyControlled)
+            return;
+
         UpdateBodyLook();
     }
-
     public void LockControls()
     {
         controlsLocked = true;

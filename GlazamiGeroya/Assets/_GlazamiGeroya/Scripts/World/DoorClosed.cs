@@ -52,6 +52,21 @@ public class IofDoorController : MonoBehaviour
     private bool isClosed;
     private bool isMoving;
     private bool isSealedLocked;
+    public bool IsClosed => isClosed;
+    public bool IsSealedLocked => isSealedLocked;
+    public void SealLockDoor()
+    {
+        if (!isClosed)
+            return;
+
+        isSealedLocked = true;
+
+        if (doorBlockCollider != null)
+            doorBlockCollider.enabled = true;
+
+        RefreshPrompt();
+    }
+    
 
     private void Start()
     {
