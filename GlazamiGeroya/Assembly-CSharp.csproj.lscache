@@ -92,6 +92,7 @@ Assets/
    KentJournal.cs
    LadderState.cs
    LadderZone.cs
+   RoomThought.cs
    TempDebug.cs
    TemperatureVFXController.cs
    TemperatureZone.cs
