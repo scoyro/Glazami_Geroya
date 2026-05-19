@@ -3,7 +3,22 @@ guid: d855014035eddff479c3baf782c6b264
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: flo_hands.003
+    second: {fileID: 2100000, guid: e021fb8028bba104b81243db70e17f15, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: flo_torso.002
+    second: {fileID: 2100000, guid: b2d2d037e96bfdf44b1ff896c05bb4c4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: head
+    second: {fileID: 2100000, guid: d7a1a98de4ffd4b45a7347864ccdb578, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
