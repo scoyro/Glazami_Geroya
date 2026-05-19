@@ -28,19 +28,14 @@ public class PanelProcedureController : MonoBehaviour
 
     [Header("Ventilation")]
     [SerializeField] private AudioSource ventilationAudioSource;
-    [SerializeField] private float ventilationFadeOutDuration = 1.5f;
-    [SerializeField] private ParticleSystem[] airflowParticles;
-
-    [Header("Panel Lights")]
-    [SerializeField] private GameObject ventilationDisabledLamp;
-    [SerializeField] private GameObject sealedLamp;
-    [SerializeField] private Light ventilationDisabledLight;
-    [SerializeField] private Light sealedLight;
 
     [Header("Audio")]
     [SerializeField] private AudioClip leverClip;
+    [SerializeField] private AudioClip deniedLeverClip;
+    [SerializeField] private AudioClip ventilationShutdownClip;
     [SerializeField] private AudioClip buttonClip;
     [SerializeField] private AudioClip sealLockClip;
+    [SerializeField] private AudioClip unsealLockClip;
     [SerializeField] private AudioClip deniedClip;
 
     [Header("Fire Suppression")]
@@ -55,7 +50,6 @@ public class PanelProcedureController : MonoBehaviour
     [SerializeField] private string closeDoorFirstHover = "Сначала закройте дверь.";
     [SerializeField] private string disableVentilationFirstHover = "Сначала отключите вентиляцию.";
     [SerializeField] private string sealRoomHover = "Нажать кнопку герметизации.";
-    [SerializeField] private string roomAlreadySealedHover = "Помещение уже герметизировано.";
     [SerializeField] private string suppressionWorkingHover = "Система пожаротушения ещё работает.";
     [SerializeField] private string unsealRoomHover = "Снять герметизацию.";
     [SerializeField] private string roomUnsealedHover = "Герметизация снята.";
@@ -104,15 +98,7 @@ public class PanelProcedureController : MonoBehaviour
     public bool RoomSealed => roomSealed;
     public bool RoomUnsealed => roomUnsealed;
 
-    // Важно: после снятия герметизации ProcedureCompleted останется true,
-    // потому что подготовка щитка уже была выполнена.
     public bool ProcedureCompleted => ventilationDisabled && (roomSealed || roomUnsealed);
-
-    private void Start()
-    {
-        SetLamp(ventilationDisabledLamp, ventilationDisabledLight, false);
-        SetLamp(sealedLamp, sealedLight, false);
-    }
 
     public void TryPullVentilationLever()
     {
@@ -122,12 +108,15 @@ public class PanelProcedureController : MonoBehaviour
         if (ventilationDisabled)
         {
             RequestThought(ventilationAlreadyDisabledThought);
-            PlayDenied();
+            PlayLeverDenied();
             return;
         }
 
         if (roomSealed || roomUnsealed)
+        {
+            PlayLeverDenied();
             return;
+        }
 
         StartCoroutine(DisableVentilationRoutine());
     }
@@ -209,25 +198,22 @@ public class PanelProcedureController : MonoBehaviour
 
         StartCoroutine(UnsealRoomRoutine());
     }
+
     private IEnumerator UnsealRoomRoutine()
     {
         isBusy = true;
 
-        if (buttonClip != null && AudioManager.Instance != null)
-            AudioManager.Instance.Play3D(
-                buttonClip,
-                buttonTransform != null ? buttonTransform.position : transform.position
-            );
+        PlayButtonSound();
 
         yield return PressButtonVisual();
+
+        PlayUnsealLockSound();
 
         if (doorController != null)
             doorController.UnlockDoor();
 
         roomSealed = false;
         roomUnsealed = true;
-
-        SetLamp(sealedLamp, sealedLight, false);
 
         if (!string.IsNullOrWhiteSpace(unsealedUiMessage))
             GameManager.Instance?.EventManager?.RequestUiMessage(unsealedUiMessage, 4f);
@@ -241,25 +227,20 @@ public class PanelProcedureController : MonoBehaviour
         if (exitCutsceneOnComplete && cutsceneController != null)
             cutsceneController.FinishCutscene();
     }
+
     private IEnumerator DisableVentilationRoutine()
     {
         isBusy = true;
 
-        if (leverClip != null && AudioManager.Instance != null)
-            AudioManager.Instance.Play3D(
-                leverClip,
-                leverTransform != null ? leverTransform.position : transform.position
-            );
+        PlayLeverSound();
 
         yield return RotateLeverDown();
 
-        yield return FadeOutVentilation();
-
-        StopAirflowParticles();
+        StopVentilationSound();
 
         ventilationDisabled = true;
 
-        SetLamp(ventilationDisabledLamp, ventilationDisabledLight, true);
+        PlayVentilationShutdown();
 
         RequestThought(ventilationDisabledThought);
 
@@ -272,11 +253,7 @@ public class PanelProcedureController : MonoBehaviour
     {
         isBusy = true;
 
-        if (buttonClip != null && AudioManager.Instance != null)
-            AudioManager.Instance.Play3D(
-                buttonClip,
-                buttonTransform != null ? buttonTransform.position : transform.position
-            );
+        PlayButtonSound();
 
         yield return PressButtonVisual();
 
@@ -288,8 +265,6 @@ public class PanelProcedureController : MonoBehaviour
 
         roomSealed = true;
         roomUnsealed = false;
-
-        SetLamp(sealedLamp, sealedLight, true);
 
         GameManager.Instance?.EventManager?.RequestUiMessage(sealingMessage, 4f);
         RequestThought(systemReadyThought);
@@ -316,6 +291,7 @@ public class PanelProcedureController : MonoBehaviour
         while (time < leverRotateDuration)
         {
             time += Time.deltaTime;
+
             float t = Mathf.Clamp01(time / leverRotateDuration);
             t = Smooth(t);
 
@@ -340,6 +316,7 @@ public class PanelProcedureController : MonoBehaviour
         while (time < buttonPressDuration)
         {
             time += Time.deltaTime;
+
             float t = Mathf.Clamp01(time / buttonPressDuration);
             t = Smooth(t);
 
@@ -355,6 +332,7 @@ public class PanelProcedureController : MonoBehaviour
         while (time < buttonReturnDuration)
         {
             time += Time.deltaTime;
+
             float t = Mathf.Clamp01(time / buttonReturnDuration);
             t = Smooth(t);
 
@@ -364,28 +342,6 @@ public class PanelProcedureController : MonoBehaviour
         }
 
         buttonTransform.position = startPosition;
-    }
-
-    private IEnumerator FadeOutVentilation()
-    {
-        if (ventilationAudioSource == null)
-            yield break;
-
-        float startVolume = ventilationAudioSource.volume;
-        float time = 0f;
-
-        while (time < ventilationFadeOutDuration)
-        {
-            time += Time.deltaTime;
-            float t = Mathf.Clamp01(time / ventilationFadeOutDuration);
-
-            ventilationAudioSource.volume = Mathf.Lerp(startVolume, 0f, t);
-
-            yield return null;
-        }
-
-        ventilationAudioSource.volume = 0f;
-        ventilationAudioSource.Stop();
     }
 
     public string GetHoverText(PanelActionType actionType)
@@ -429,25 +385,75 @@ public class PanelProcedureController : MonoBehaviour
         }
     }
 
-    private void StopAirflowParticles()
+    private void StopVentilationSound()
     {
-        if (airflowParticles == null)
+        if (ventilationAudioSource == null)
             return;
 
-        foreach (ParticleSystem ps in airflowParticles)
-        {
-            if (ps != null)
-                ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
-        }
+        ventilationAudioSource.Stop();
     }
 
-    private void SetLamp(GameObject lampObject, Light lampLight, bool enabled)
+    private void PlayLeverSound()
     {
-        if (lampObject != null)
-            lampObject.SetActive(enabled);
+        if (leverClip == null || AudioManager.Instance == null)
+            return;
 
-        if (lampLight != null)
-            lampLight.enabled = enabled;
+        Vector3 position = leverTransform != null ? leverTransform.position : transform.position;
+        AudioManager.Instance.Play3D(leverClip, position);
+    }
+    private void PlayUnsealLockSound()
+    {
+        if (unsealLockClip == null || AudioManager.Instance == null)
+            return;
+
+        Vector3 position = doorController != null
+            ? doorController.transform.position
+            : transform.position;
+
+        AudioManager.Instance.Play3D(unsealLockClip, position);
+    }
+
+    private void PlayButtonSound()
+    {
+        if (buttonClip == null || AudioManager.Instance == null)
+            return;
+
+        Vector3 position = buttonTransform != null ? buttonTransform.position : transform.position;
+        AudioManager.Instance.Play3D(buttonClip, position);
+    }
+
+    private void PlayDenied()
+    {
+        if (deniedClip != null && AudioManager.Instance != null)
+            AudioManager.Instance.Play2D(deniedClip);
+    }
+
+    private void PlayLeverDenied()
+    {
+        AudioClip clip = deniedLeverClip != null ? deniedLeverClip : deniedClip;
+
+        if (clip == null || AudioManager.Instance == null)
+            return;
+
+        Vector3 position = leverTransform != null ? leverTransform.position : transform.position;
+        AudioManager.Instance.Play3D(clip, position);
+    }
+
+    private void PlayVentilationShutdown()
+    {
+        if (ventilationShutdownClip == null || AudioManager.Instance == null)
+            return;
+
+        Vector3 position;
+
+        if (ventilationAudioSource != null)
+            position = ventilationAudioSource.transform.position;
+        else if (leverTransform != null)
+            position = leverTransform.position;
+        else
+            position = transform.position;
+
+        AudioManager.Instance.Play3D(ventilationShutdownClip, position);
     }
 
     private void RequestThought(string text)
@@ -456,12 +462,6 @@ public class PanelProcedureController : MonoBehaviour
             return;
 
         GameManager.Instance?.EventManager?.RequestThought(text, 4f);
-    }
-
-    private void PlayDenied()
-    {
-        if (deniedClip != null && AudioManager.Instance != null)
-            AudioManager.Instance.Play2D(deniedClip);
     }
 
     private float Smooth(float t)
