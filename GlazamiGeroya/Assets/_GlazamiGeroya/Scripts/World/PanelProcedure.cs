@@ -207,6 +207,20 @@ public class PanelProcedureController : MonoBehaviour
             return;
         }
 
+        StartCoroutine(UnsealRoomRoutine());
+    }
+    private IEnumerator UnsealRoomRoutine()
+    {
+        isBusy = true;
+
+        if (buttonClip != null && AudioManager.Instance != null)
+            AudioManager.Instance.Play3D(
+                buttonClip,
+                buttonTransform != null ? buttonTransform.position : transform.position
+            );
+
+        yield return PressButtonVisual();
+
         if (doorController != null)
             doorController.UnlockDoor();
 
@@ -221,8 +235,12 @@ public class PanelProcedureController : MonoBehaviour
         RequestThought(unsealedThought);
 
         onRoomUnsealed?.Invoke();
-    }
 
+        isBusy = false;
+
+        if (exitCutsceneOnComplete && cutsceneController != null)
+            cutsceneController.FinishCutscene();
+    }
     private IEnumerator DisableVentilationRoutine()
     {
         isBusy = true;
