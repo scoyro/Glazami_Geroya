@@ -2278,7 +2278,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 932c7859f7dd69548a5942f50de2a17f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractionTarget
-  promptText: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 E"
+  promptText: "\u0423\u043C\u044B\u0442\u044C\u0441\u044F E"
   interactionData:
     interactionId: 
     interactionKind: 1
@@ -2405,7 +2405,7 @@ Transform:
   m_GameObject: {fileID: 446868520}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -33.176, y: 0.053, z: 15.169}
+  m_LocalPosition: {x: -33.176, y: 0.275, z: 15.169}
   m_LocalScale: {x: 0.66, y: 0.21039, z: 0.66}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3726,8 +3726,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerControlLock
   playerController: {fileID: 1846162266}
-  scriptsToDisable:
-  - {fileID: 1846162264}
+  scriptsToDisable: []
 --- !u!1 &616040804
 GameObject:
   m_ObjectHideFlags: 0
@@ -5570,7 +5569,7 @@ MonoBehaviour:
   audioDucker: {fileID: 313297597}
   lampExplosionClip: {fileID: 8300000, guid: fad1dbd99ed799845844aa921495dd34, type: 3}
   alarmAudioSource: {fileID: 1525881139}
-  crisisAmbienceClip: {fileID: 0}
+  crisisAmbienceClip: {fileID: 8300000, guid: 3c356eb462c1aae4ab8b4243350cb05e, type: 3}
   lampSoundPoint: {fileID: 1441015157}
   lampLight: {fileID: 793207619}
   normalLampObject: {fileID: 0}
@@ -6737,7 +6736,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 0
-  m_Volume: 0.06
+  m_Volume: 0.03
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -9846,7 +9845,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-  interactionSystem: {fileID: 0}
+  interactionSystem: {fileID: 1846162264}
 --- !u!4 &1605268658
 Transform:
   m_ObjectHideFlags: 0
@@ -12296,7 +12295,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 112a2751b92161340a3d53152a3736f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChoiceSystem
-  incidentDuration: 60
+  incidentDuration: 120
   valveDuration: 9
   crisisThoughtDelay: 2
   startIncidentInteractionId: incident_alarm

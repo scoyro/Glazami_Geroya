@@ -393,7 +393,7 @@ public class PanelProcedureController : MonoBehaviour
                         return suppressionWorkingHover;
 
                     if (!fireSuppressionLever.IsFinished)
-                        return "Сначала запустите систему пожаротушения.";
+                        return "Нажать кнопку герметизации.";
 
                     return unsealRoomHover;
                 }
