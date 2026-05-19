@@ -88,18 +88,16 @@ public class ChoiceSystem : MonoBehaviour
     public void StartIncident()
     {
         var events = gameManager?.EventManager;
-        if (events == null || gameManager.GameStateManager == null || gameManager.GameStateManager.Phase != GamePhase.Calm)
+
+        if (events == null || gameManager.GameStateManager == null)
+            return;
+
+        if (gameManager.GameStateManager.Phase != GamePhase.Calm)
             return;
 
         events.SetCrisisMode(true);
         events.SetPhase(GamePhase.Crisis);
         events.StartIncidentTimer(incidentDuration);
-        events.RequestVfx("crisis_fire");
-        events.RequestSfx("alarm");
-        StartCoroutine(ShowCrisisThoughtDelayed());
-        events.RequestVoice("incident_announcement");
-        
-        
     }
     private IEnumerator ShowCrisisThoughtDelayed()
 {

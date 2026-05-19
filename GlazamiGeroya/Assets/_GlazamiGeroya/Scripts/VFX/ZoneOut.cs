@@ -15,6 +15,8 @@ public class ZoneOutVolumeEffect : MonoBehaviour, IPlayableVfx
     [Range(0f, 1f)]
     [SerializeField] private float maxWeight = 1f;
 
+    public float TotalDuration => fadeInDuration + holdDuration + fadeOutDuration;
+
     private Coroutine routine;
 
     private void Awake()
