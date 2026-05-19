@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6dd5c31d52aee64f804880ff9e0285a, type: 3}
+  m_Name: SteamSound
+  m_EditorClassIdentifier: Assembly-CSharp::RandomAudioConfig
+  clips:
+  - {fileID: 8300000, guid: 5a752f1725142264b9f9890a1ca979fc, type: 3}
+  - {fileID: 8300000, guid: 18f2b7cc7f63d594ebe45621d9f80065, type: 3}
+  - {fileID: 8300000, guid: 2d292b9e97e713745891faf2bfa63903, type: 3}
+  - {fileID: 8300000, guid: 462a21dfdf0dc3849bebc15812702f5e, type: 3}
+  - {fileID: 8300000, guid: 4affad79d4bfacd4a896836564724b0a, type: 3}
+  - {fileID: 8300000, guid: f7cb9c303c2ad3f4b85c5bbae2d35056, type: 3}
+  minDelay: 25
+  maxDelay: 30
+  use3DSound: 1
+  playOnStart: 1
+  loopRandomly: 1
+  volume: 0.692
+  fadeInDuration: 0.1
+  fadeOutDuration: 0.3
+  minDistance: 0
+  maxDistance: 3
+  rolloffMode: 1

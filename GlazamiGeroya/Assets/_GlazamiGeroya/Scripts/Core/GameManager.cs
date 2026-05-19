@@ -17,7 +17,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private ChecklistManager checklistManager;
     [SerializeField] private UIManager uiManager;
     [SerializeField] private VFXController vfxController;
-    [SerializeField] private AtmosphereManager atmosphereManager;
+    [SerializeField] private AudioManager audioManager;
     [SerializeField] private GameStateManager gameStateManager;
     [SerializeField] private EndingController endingController;
     [SerializeField] private TemperatureVFXController temperatureVFXController;
@@ -29,7 +29,7 @@ public class GameManager : MonoBehaviour
     public ChecklistManager ChecklistManager => checklistManager;
     public UIManager UIManager => uiManager;
     public VFXController VFXController => vfxController;
-    public AtmosphereManager AtmosphereManager => atmosphereManager;
+    public AudioManager AudioManager => audioManager;
     public GameStateManager GameStateManager => gameStateManager;
     public EndingController EndingController => endingController;
     public TemperatureManager TemperatureManager => temperatureManager;
@@ -56,11 +56,6 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         Bootstrap();
-        // Add temporarily to GameManager.Start(), after Bootstrap()
-var allSystems = FindObjectsByType<InteractionSystem>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-Debug.Log($"InteractionSystem count: {allSystems.Length}");
-foreach (var s in allSystems)
-    Debug.Log($"  → {s.gameObject.name} | scene={s.gameObject.scene.name} | enabled={s.enabled}");
     }
 
     private void CacheManagers()
@@ -72,7 +67,7 @@ foreach (var s in allSystems)
         if (checklistManager == null) checklistManager = GetComponentInChildren<ChecklistManager>(true);
         if (uiManager == null) uiManager = GetComponentInChildren<UIManager>(true);
         if (vfxController == null) vfxController = GetComponentInChildren<VFXController>(true);
-        if (atmosphereManager == null) atmosphereManager = GetComponentInChildren<AtmosphereManager>(true);
+        if (audioManager == null) audioManager = GetComponentInChildren<AudioManager>(true);
         if (gameStateManager == null) gameStateManager = GetComponentInChildren<GameStateManager>(true);
         if (endingController == null) endingController = GetComponentInChildren<EndingController>(true);
         if (temperatureManager == null) temperatureManager = GetComponentInChildren<TemperatureManager>(true);
@@ -89,7 +84,7 @@ foreach (var s in allSystems)
         checklistManager?.Initialize(this);
         uiManager?.Initialize(this);
         vfxController?.Initialize(this);
-        atmosphereManager?.Initialize(this);
+        audioManager?.Initialize(this);
         gameStateManager?.Initialize(this);
         endingController?.Initialize(this);
         temperatureManager?.Initialize(this);

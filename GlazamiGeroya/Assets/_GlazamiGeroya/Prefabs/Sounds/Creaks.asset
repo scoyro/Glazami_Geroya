@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6dd5c31d52aee64f804880ff9e0285a, type: 3}
+  m_Name: Creaks
+  m_EditorClassIdentifier: Assembly-CSharp::RandomAudioConfig
+  clips:
+  - {fileID: 8300000, guid: d779cb8f533b47845a4a4717c01c737e, type: 3}
+  - {fileID: 8300000, guid: 4ee2c181eca104e4d993d5aa0b0cb657, type: 3}
+  minDelay: 3
+  maxDelay: 10
+  use3DSound: 1
+  playOnStart: 1
+  loopRandomly: 1
+  volume: 1
+  fadeInDuration: 0.2
+  fadeOutDuration: 0.5
+  minDistance: 1
+  maxDistance: 15
+  rolloffMode: 1

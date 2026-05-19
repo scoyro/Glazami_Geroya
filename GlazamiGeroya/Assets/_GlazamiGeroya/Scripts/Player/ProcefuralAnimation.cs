@@ -17,6 +17,11 @@ public class ProceduralWalkAnimation : MonoBehaviour
     public float armAngle = 18f;
     public float smooth = 10f;
 
+    [Header("Movement Detection")]
+    [SerializeField] private CharacterController controller;
+    [SerializeField] private float minRealSpeed = 0.05f;
+    [SerializeField] private float minInputAmount = 0.1f;
+
     [Header("Axis Test")]
     public Vector3 legAxis = Vector3.right;
     public Vector3 armAxis = Vector3.right;
@@ -28,7 +33,16 @@ public class ProceduralWalkAnimation : MonoBehaviour
     private Quaternion leftUpperArmStart;
     private Quaternion rightUpperArmStart;
 
+    private Vector3 lastPosition;
     private float timer;
+
+    private void Awake()
+    {
+        if (controller == null)
+            controller = GetComponentInParent<CharacterController>();
+
+        lastPosition = transform.position;
+    }
 
     private void Start()
     {
@@ -42,41 +56,67 @@ public class ProceduralWalkAnimation : MonoBehaviour
 
     private void LateUpdate()
     {
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
-
-        bool isMoving = Mathf.Abs(horizontal) > 0.1f || Mathf.Abs(vertical) > 0.1f;
+        bool isMoving = IsActuallyMoving();
 
         if (isMoving)
-        {
-            timer += Time.deltaTime * walkSpeed;
-
-            float leftSwing = Mathf.Sin(timer);
-            float rightSwing = Mathf.Sin(timer + Mathf.PI);
-
-            // Ноги
-            RotateBone(leftUpperLeg, leftUpperLegStart, legAxis, leftSwing * legAngle);
-            RotateBone(rightUpperLeg, rightUpperLegStart, legAxis, rightSwing * legAngle);
-
-            // Колени
-            RotateBone(leftLowerLeg, leftLowerLegStart, legAxis, Mathf.Max(0f, -leftSwing) * kneeAngle);
-            RotateBone(rightLowerLeg, rightLowerLegStart, legAxis, Mathf.Max(0f, -rightSwing) * kneeAngle);
-
-            // Руки — перекрёстно относительно ног
-            RotateBone(leftUpperArm, leftUpperArmStart, armAxis, leftSwing * armAngle);
-            RotateBone(rightUpperArm, rightUpperArmStart, armAxis, rightSwing * armAngle);
-        }
+            PlayWalkAnimation();
         else
-        {
-            timer = 0f;
+            ReturnToIdlePose();
 
-            ReturnBone(leftUpperLeg, leftUpperLegStart);
-            ReturnBone(rightUpperLeg, rightUpperLegStart);
-            ReturnBone(leftLowerLeg, leftLowerLegStart);
-            ReturnBone(rightLowerLeg, rightLowerLegStart);
-            ReturnBone(leftUpperArm, leftUpperArmStart);
-            ReturnBone(rightUpperArm, rightUpperArmStart);
-        }
+        lastPosition = transform.position;
+    }
+
+    private bool IsActuallyMoving()
+    {
+        if (controller != null && !controller.isGrounded)
+            return false;
+
+        float horizontal = Input.GetAxisRaw("Horizontal");
+        float vertical = Input.GetAxisRaw("Vertical");
+
+        bool hasInput =
+            new Vector2(horizontal, vertical).sqrMagnitude >=
+            minInputAmount * minInputAmount;
+
+        if (!hasInput)
+            return false;
+
+        Vector3 delta = transform.position - lastPosition;
+        delta.y = 0f;
+
+        float realSpeed =
+            delta.magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
+
+        return realSpeed >= minRealSpeed;
+    }
+
+    private void PlayWalkAnimation()
+    {
+        timer += Time.deltaTime * walkSpeed;
+
+        float leftSwing = Mathf.Sin(timer);
+        float rightSwing = Mathf.Sin(timer + Mathf.PI);
+
+        RotateBone(leftUpperLeg, leftUpperLegStart, legAxis, leftSwing * legAngle);
+        RotateBone(rightUpperLeg, rightUpperLegStart, legAxis, rightSwing * legAngle);
+
+        RotateBone(leftLowerLeg, leftLowerLegStart, legAxis, Mathf.Max(0f, -leftSwing) * kneeAngle);
+        RotateBone(rightLowerLeg, rightLowerLegStart, legAxis, Mathf.Max(0f, -rightSwing) * kneeAngle);
+
+        RotateBone(leftUpperArm, leftUpperArmStart, armAxis, leftSwing * armAngle);
+        RotateBone(rightUpperArm, rightUpperArmStart, armAxis, rightSwing * armAngle);
+    }
+
+    private void ReturnToIdlePose()
+    {
+        timer = 0f;
+
+        ReturnBone(leftUpperLeg, leftUpperLegStart);
+        ReturnBone(rightUpperLeg, rightUpperLegStart);
+        ReturnBone(leftLowerLeg, leftLowerLegStart);
+        ReturnBone(rightLowerLeg, rightLowerLegStart);
+        ReturnBone(leftUpperArm, leftUpperArmStart);
+        ReturnBone(rightUpperArm, rightUpperArmStart);
     }
 
     private void RotateBone(Transform bone, Quaternion startRotation, Vector3 axis, float angle)
