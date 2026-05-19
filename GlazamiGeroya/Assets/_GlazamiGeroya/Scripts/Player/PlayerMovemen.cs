@@ -45,14 +45,10 @@ public class PlayerController : MonoBehaviour
     private float moveZ;
 
     private bool controlsLocked;
-
-    public bool ControlsLocked => controlsLocked;
     private bool cameraExternallyControlled;
 
-    public void SetCameraExternallyControlled(bool value)
-    {
-        cameraExternallyControlled = value;
-    }
+    public bool ControlsLocked => controlsLocked;
+    public bool CameraExternallyControlled => cameraExternallyControlled;
 
     private void Start()
     {
@@ -77,9 +73,7 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         if (!controlsLocked && !cameraExternallyControlled)
-        {
             Look();
-        }
 
         Move();
 
@@ -87,14 +81,11 @@ public class PlayerController : MonoBehaviour
             return;
 
         if (!controlsLocked)
-        {
             HandleHeadBob();
-        }
         else
-        {
             ResetHeadBob();
-        }
     }
+
     private void LateUpdate()
     {
         if (controlsLocked || cameraExternallyControlled)
@@ -102,6 +93,7 @@ public class PlayerController : MonoBehaviour
 
         UpdateBodyLook();
     }
+
     public void LockControls()
     {
         controlsLocked = true;
@@ -109,6 +101,9 @@ public class PlayerController : MonoBehaviour
         moveX = 0f;
         moveZ = 0f;
         timer = 0f;
+
+        if (controller != null && controller.isGrounded)
+            velocity.y = -2f;
     }
 
     public void UnlockControls()
@@ -116,18 +111,36 @@ public class PlayerController : MonoBehaviour
         controlsLocked = false;
     }
 
+    public void SetCameraExternallyControlled(bool value)
+    {
+        cameraExternallyControlled = value;
+
+        if (value)
+        {
+            moveX = 0f;
+            moveZ = 0f;
+            timer = 0f;
+        }
+    }
+
     private void UpdateBodyLook()
     {
         if (headBone != null)
         {
-            Quaternion targetHeadRotation = headStartRotation * Quaternion.Euler(xRotation * headFollowAmount, 0f, 0f);
-            headBone.localRotation = Quaternion.Lerp(headBone.localRotation, targetHeadRotation, Time.deltaTime * 10f);
+            Quaternion targetHeadRotation =
+                headStartRotation * Quaternion.Euler(xRotation * headFollowAmount, 0f, 0f);
+
+            headBone.localRotation =
+                Quaternion.Lerp(headBone.localRotation, targetHeadRotation, Time.deltaTime * 10f);
         }
 
         if (upperBodyBone != null)
         {
-            Quaternion targetBodyRotation = upperBodyStartRotation * Quaternion.Euler(xRotation * bodyFollowAmount, 0f, 0f);
-            upperBodyBone.localRotation = Quaternion.Lerp(upperBodyBone.localRotation, targetBodyRotation, Time.deltaTime * 6f);
+            Quaternion targetBodyRotation =
+                upperBodyStartRotation * Quaternion.Euler(xRotation * bodyFollowAmount, 0f, 0f);
+
+            upperBodyBone.localRotation =
+                Quaternion.Lerp(upperBodyBone.localRotation, targetBodyRotation, Time.deltaTime * 6f);
         }
     }
 
@@ -148,32 +161,41 @@ public class PlayerController : MonoBehaviour
 
     private void Move()
     {
-        if (controlsLocked)
+        if (controller == null)
+            return;
+
+        if (controlsLocked || cameraExternallyControlled)
         {
             moveX = 0f;
             moveZ = 0f;
         }
         else
         {
-            moveX = Input.GetAxis("Horizontal");
-            moveZ = Input.GetAxis("Vertical");
+            moveX = Input.GetAxisRaw("Horizontal");
+            moveZ = Input.GetAxisRaw("Vertical");
         }
 
-        Vector3 move = (transform.right * moveX + transform.forward * moveZ).normalized;
+        Vector3 horizontalMove = Vector3.zero;
+
+        if (!controlsLocked && !cameraExternallyControlled)
+        {
+            horizontalMove = (transform.right * moveX + transform.forward * moveZ).normalized;
+        }
 
         float currentSpeed = speed;
 
-        if (!controlsLocked && isCrisis && Input.GetKey(sprintKey))
+        if (!controlsLocked && !cameraExternallyControlled && isCrisis && Input.GetKey(sprintKey))
             currentSpeed *= crisisSprintMultiplier;
-
-        controller.Move(move * currentSpeed * Time.deltaTime);
 
         if (controller.isGrounded && velocity.y < 0f)
             velocity.y = -2f;
 
         velocity.y += gravity * Time.deltaTime;
 
-        controller.Move(velocity * Time.deltaTime);
+        Vector3 finalMove = horizontalMove * currentSpeed;
+        finalMove.y = velocity.y;
+
+        controller.Move(finalMove * Time.deltaTime);
     }
 
     private void SetCrisisMode(bool enabled)
@@ -188,7 +210,7 @@ public class PlayerController : MonoBehaviour
 
         bool isMoving = Mathf.Abs(moveX) > 0.1f || Mathf.Abs(moveZ) > 0.1f;
 
-        if (isMoving && controller.isGrounded)
+        if (isMoving && controller != null && controller.isGrounded)
         {
             timer += Time.deltaTime * bobSpeed;
             float bob = Mathf.Sin(timer) * bobAmount;

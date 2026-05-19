@@ -11,6 +11,10 @@ public class PanelProcedureController : MonoBehaviour
     [SerializeField] private PanelCutsceneController cutsceneController;
     [SerializeField] private bool exitCutsceneOnComplete = true;
 
+    [Header("Failure Behaviour")]
+    [SerializeField] private bool exitCutsceneIfDoorIsOpen = true;
+    [SerializeField] private float exitAfterFailureDelay = 1.2f;
+
     [Header("Lever Visual")]
     [SerializeField] private Transform leverTransform;
     [SerializeField] private Transform leverOffRotationPoint;
@@ -39,14 +43,22 @@ public class PanelProcedureController : MonoBehaviour
     [SerializeField] private AudioClip sealLockClip;
     [SerializeField] private AudioClip deniedClip;
 
+    [Header("Fire Suppression")]
+    [SerializeField] private FireSuppressionLeverController fireSuppressionLever;
+
+    [Header("Unseal")]
+    [SerializeField] private bool allowUnsealAfterSuppression = true;
+
     [Header("Hover Text")]
-    [SerializeField] private string systemReadyHover = "Система готова.";
     [SerializeField] private string pullLeverHover = "Потянуть рычаг вентиляции.";
     [SerializeField] private string ventilationAlreadyDisabledHover = "Вентиляция уже отключена.";
     [SerializeField] private string closeDoorFirstHover = "Сначала закройте дверь.";
     [SerializeField] private string disableVentilationFirstHover = "Сначала отключите вентиляцию.";
     [SerializeField] private string sealRoomHover = "Нажать кнопку герметизации.";
     [SerializeField] private string roomAlreadySealedHover = "Помещение уже герметизировано.";
+    [SerializeField] private string suppressionWorkingHover = "Система пожаротушения ещё работает.";
+    [SerializeField] private string unsealRoomHover = "Снять герметизацию.";
+    [SerializeField] private string roomUnsealedHover = "Герметизация снята.";
 
     [Header("Messages")]
     [TextArea]
@@ -67,18 +79,34 @@ public class PanelProcedureController : MonoBehaviour
     [TextArea]
     [SerializeField] private string systemReadyThought = "Система готова.";
 
+    [TextArea]
+    [SerializeField] private string suppressionStillWorkingThought =
+        "Систему нельзя отключать, пока пожаротушение не завершено.";
+
+    [TextArea]
+    [SerializeField] private string unsealedThought =
+        "Герметизация снята. Дверь можно открыть.";
+
+    [SerializeField] private string unsealedUiMessage = "Герметизация снята";
+
     [Header("Events")]
     [SerializeField] private UnityEvent onVentilationDisabled;
     [SerializeField] private UnityEvent onRoomSealed;
     [SerializeField] private UnityEvent onProcedureCompleted;
+    [SerializeField] private UnityEvent onRoomUnsealed;
 
     private bool ventilationDisabled;
     private bool roomSealed;
+    private bool roomUnsealed;
     private bool isBusy;
 
     public bool VentilationDisabled => ventilationDisabled;
     public bool RoomSealed => roomSealed;
-    public bool ProcedureCompleted => ventilationDisabled && roomSealed;
+    public bool RoomUnsealed => roomUnsealed;
+
+    // Важно: после снятия герметизации ProcedureCompleted останется true,
+    // потому что подготовка щитка уже была выполнена.
+    public bool ProcedureCompleted => ventilationDisabled && (roomSealed || roomUnsealed);
 
     private void Start()
     {
@@ -88,7 +116,7 @@ public class PanelProcedureController : MonoBehaviour
 
     public void TryPullVentilationLever()
     {
-        if (isBusy || roomSealed)
+        if (isBusy)
             return;
 
         if (ventilationDisabled)
@@ -98,18 +126,37 @@ public class PanelProcedureController : MonoBehaviour
             return;
         }
 
+        if (roomSealed || roomUnsealed)
+            return;
+
         StartCoroutine(DisableVentilationRoutine());
     }
 
     public void TryPressSealButton()
     {
-        if (isBusy || roomSealed)
+        if (isBusy)
             return;
+
+        if (roomUnsealed)
+        {
+            PlayDenied();
+            return;
+        }
+
+        if (roomSealed)
+        {
+            TryUnsealRoom();
+            return;
+        }
 
         if (doorController == null || !doorController.IsClosed)
         {
             RequestThought(doorOpenThought);
             PlayDenied();
+
+            if (exitCutsceneIfDoorIsOpen && cutsceneController != null)
+                StartCoroutine(ExitCutsceneAfterDelay());
+
             return;
         }
 
@@ -123,12 +170,68 @@ public class PanelProcedureController : MonoBehaviour
         StartCoroutine(SealRoomRoutine());
     }
 
+    private IEnumerator ExitCutsceneAfterDelay()
+    {
+        yield return new WaitForSeconds(exitAfterFailureDelay);
+
+        if (cutsceneController != null && cutsceneController.IsActive && !cutsceneController.IsMoving)
+            cutsceneController.FinishCutscene();
+    }
+
+    private void TryUnsealRoom()
+    {
+        if (!allowUnsealAfterSuppression)
+        {
+            PlayDenied();
+            return;
+        }
+
+        if (fireSuppressionLever == null)
+        {
+            RequestThought("Не найден контроллер системы пожаротушения.");
+            PlayDenied();
+            return;
+        }
+
+        if (fireSuppressionLever.IsWorking)
+        {
+            RequestThought(suppressionStillWorkingThought);
+            PlayDenied();
+            return;
+        }
+
+        if (!fireSuppressionLever.IsFinished)
+        {
+            RequestThought("Сначала нужно запустить систему пожаротушения.");
+            PlayDenied();
+            return;
+        }
+
+        if (doorController != null)
+            doorController.UnlockDoor();
+
+        roomSealed = false;
+        roomUnsealed = true;
+
+        SetLamp(sealedLamp, sealedLight, false);
+
+        if (!string.IsNullOrWhiteSpace(unsealedUiMessage))
+            GameManager.Instance?.EventManager?.RequestUiMessage(unsealedUiMessage, 4f);
+
+        RequestThought(unsealedThought);
+
+        onRoomUnsealed?.Invoke();
+    }
+
     private IEnumerator DisableVentilationRoutine()
     {
         isBusy = true;
 
         if (leverClip != null && AudioManager.Instance != null)
-            AudioManager.Instance.Play3D(leverClip, leverTransform != null ? leverTransform.position : transform.position);
+            AudioManager.Instance.Play3D(
+                leverClip,
+                leverTransform != null ? leverTransform.position : transform.position
+            );
 
         yield return RotateLeverDown();
 
@@ -152,7 +255,10 @@ public class PanelProcedureController : MonoBehaviour
         isBusy = true;
 
         if (buttonClip != null && AudioManager.Instance != null)
-            AudioManager.Instance.Play3D(buttonClip, buttonTransform != null ? buttonTransform.position : transform.position);
+            AudioManager.Instance.Play3D(
+                buttonClip,
+                buttonTransform != null ? buttonTransform.position : transform.position
+            );
 
         yield return PressButtonVisual();
 
@@ -163,6 +269,7 @@ public class PanelProcedureController : MonoBehaviour
             doorController.SealLockDoor();
 
         roomSealed = true;
+        roomUnsealed = false;
 
         SetLamp(sealedLamp, sealedLight, true);
 
@@ -262,11 +369,9 @@ public class PanelProcedureController : MonoBehaviour
         ventilationAudioSource.volume = 0f;
         ventilationAudioSource.Stop();
     }
+
     public string GetHoverText(PanelActionType actionType)
     {
-        if (ProcedureCompleted)
-            return systemReadyHover;
-
         switch (actionType)
         {
             case PanelActionType.VentilationLever:
@@ -276,14 +381,28 @@ public class PanelProcedureController : MonoBehaviour
                 return pullLeverHover;
 
             case PanelActionType.SealButton:
+                if (roomUnsealed)
+                    return roomUnsealedHover;
+
+                if (roomSealed)
+                {
+                    if (fireSuppressionLever == null)
+                        return "Не назначен контроллер пожаротушения.";
+
+                    if (fireSuppressionLever.IsWorking)
+                        return suppressionWorkingHover;
+
+                    if (!fireSuppressionLever.IsFinished)
+                        return "Сначала запустите систему пожаротушения.";
+
+                    return unsealRoomHover;
+                }
+
                 if (doorController == null || !doorController.IsClosed)
                     return closeDoorFirstHover;
 
                 if (!ventilationDisabled)
                     return disableVentilationFirstHover;
-
-                if (roomSealed)
-                    return roomAlreadySealedHover;
 
                 return sealRoomHover;
 

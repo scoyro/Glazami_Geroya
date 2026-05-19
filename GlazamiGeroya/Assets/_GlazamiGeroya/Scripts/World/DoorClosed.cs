@@ -191,8 +191,6 @@ public class IofDoorController : MonoBehaviour
 
         isClosed = closing;
 
-        if (closing && lockAfterClosing)
-            isSealedLocked = true;
 
         if (doorBlockCollider != null)
             doorBlockCollider.enabled = isClosed;

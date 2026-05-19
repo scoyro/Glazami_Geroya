@@ -22,7 +22,7 @@ public class InteractionSystem : MonoBehaviour
     private int missedFrameCount;
     private LayerMask interactionMask;
     private GameManager gameManager;
-
+    private bool interactionLocked;
 
     public void Initialize(GameManager manager)
     {
@@ -37,30 +37,36 @@ public class InteractionSystem : MonoBehaviour
         interactionMask = LayerMask.GetMask("Interactable");
     }
 
-    private void LateUpdate()
+   private void LateUpdate()
+{
+    if (playerCamera == null || gameManager == null || gameManager.UIManager == null)
+        return;
+
+    if (interactionLocked)
     {
-        if (playerCamera == null || gameManager == null || gameManager.UIManager == null)
-            return;
+        gameManager.UIManager.SetPrompt(string.Empty);
+        return;
+    }
 
-        InteractionTarget detectedTarget = GetCurrentTarget();
+    InteractionTarget detectedTarget = GetCurrentTarget();
 
-        if (detectedTarget != null && detectedTarget.CanInteract(gameManager.GameStateManager))
+    if (detectedTarget != null && detectedTarget.CanInteract(gameManager.GameStateManager))
+    {
+        bool canSwitchTarget =
+            lastTarget == null ||
+            detectedTarget == lastTarget ||
+            Time.time - lastTargetSwitchTime >= targetSwitchDelay;
+
+        if (canSwitchTarget)
         {
-            bool canSwitchTarget =
-                lastTarget == null ||
-                detectedTarget == lastTarget ||
-                Time.time - lastTargetSwitchTime >= targetSwitchDelay;
+            if (lastTarget != detectedTarget)
+                lastTargetSwitchTime = Time.time;
 
-            if (canSwitchTarget)
-            {
-                if (lastTarget != detectedTarget)
-                    lastTargetSwitchTime = Time.time;
-
-                lastTarget = detectedTarget;
-            }
-
-            missedFrameCount = 0;
+            lastTarget = detectedTarget;
         }
+
+        missedFrameCount = 0;
+    }
         else
         {
             missedFrameCount++;
@@ -196,5 +202,19 @@ public class InteractionSystem : MonoBehaviour
 
         if (Mathf.Abs(data.temperatureDelta) > 0.001f)
             gameManager.TemperatureManager?.ApplyTemperatureDelta(data.temperatureDelta);
+    }
+    public void LockInteraction()
+    {
+        interactionLocked = true;
+        lastTarget = null;
+        missedFrameCount = 0;
+
+        if (gameManager != null && gameManager.UIManager != null)
+            gameManager.UIManager.SetPrompt(string.Empty);
+    }
+
+    public void UnlockInteraction()
+    {
+        interactionLocked = false;
     }
 }

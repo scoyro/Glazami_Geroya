@@ -6,63 +6,64 @@ public class PanelCutsceneController : MonoBehaviour
 {
     [Header("Camera")]
     [SerializeField] private Transform playerCamera;
-    [SerializeField] private Transform cameraTargetPoint;
-    [SerializeField] private float cameraMoveDuration = 1.1f;
-    [SerializeField] private bool holdCameraAtTarget = true;
+    [SerializeField] private Transform panelCameraTarget;
+
+    [Header("Camera Movement")]
+    [SerializeField] private float moveToPanelDuration = 1.1f;
+    [SerializeField] private float moveBackDuration = 0.8f;
 
     [Header("Player Lock")]
     [SerializeField] private PlayerControlLock playerControlLock;
     [SerializeField] private PlayerController playerController;
 
-    [Header("Scripts To Disable While Active")]
-    [Tooltip("Сюда можно добавить HeadBob, CameraSway, CameraShake или другие скрипты, которые двигают камеру.")]
-    [SerializeField] private Behaviour[] cameraControlScriptsToDisable;
+    [Header("Player Freeze")]
+    [SerializeField] private Transform playerRoot;
+    [SerializeField] private bool freezePlayerTransform = true;
 
-    [Header("Clickable Objects")]
-    [SerializeField] private Collider[] collidersToDisableWhileActive;
+    [Header("Colliders")]
     [SerializeField] private Collider[] clickableColliders;
+    [SerializeField] private Collider[] collidersToDisableWhileActive;
+
+    [Header("Panel Click Raycast")]
+    [SerializeField] private Camera raycastCamera;
+    [SerializeField] private LayerMask clickableLayerMask = ~0;
+    [SerializeField] private float raycastDistance = 5f;
+
+    [Header("Hover")]
+    [SerializeField] private PanelHoverText hoverText;
+
+    [Header("Exit")]
+    [SerializeField] private KeyCode exitKey = KeyCode.Escape;
+    [SerializeField] private int exitMouseButton = 1;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onCutsceneStarted;
     [SerializeField] private UnityEvent onCutsceneFinished;
+    [Header("Interaction Lock")]
+    [SerializeField] private InteractionSystem interactionSystem;
 
     private Transform originalCameraParent;
     private Vector3 originalCameraLocalPosition;
     private Quaternion originalCameraLocalRotation;
 
-    private bool[] disabledScriptsOriginalStates;
+    private Vector3 frozenPlayerPosition;
+    private Quaternion frozenPlayerRotation;
 
     private bool isActive;
     private bool isMoving;
-    private bool cameraAtPanel;
+
+    private PanelClickable currentHover;
+    private Coroutine currentRoutine;
 
     public bool IsActive => isActive;
     public bool IsMoving => isMoving;
-    [Header("Exit")]
-    [SerializeField] private KeyCode exitKey = KeyCode.Escape;
-    [SerializeField] private int exitMouseButton = 1; // 1 = правая кнопка мыши
 
     private void Awake()
     {
-        SetClickableColliders(false);
-    }
+        SetColliders(clickableColliders, false);
 
-    private void LateUpdate()
-    {
-        if (!isActive)
-            return;
-
-        if (!cameraAtPanel)
-            return;
-
-        if (!holdCameraAtTarget)
-            return;
-
-        if (playerCamera == null || cameraTargetPoint == null)
-            return;
-
-        playerCamera.position = cameraTargetPoint.position;
-        playerCamera.rotation = cameraTargetPoint.rotation;
+        if (raycastCamera == null && playerCamera != null)
+            raycastCamera = playerCamera.GetComponent<Camera>();
     }
 
     private void Update()
@@ -71,7 +72,26 @@ public class PanelCutsceneController : MonoBehaviour
             return;
 
         if (Input.GetKeyDown(exitKey) || Input.GetMouseButtonDown(exitMouseButton))
+        {
             FinishCutscene();
+            return;
+        }
+
+        UpdatePanelHoverAndClick();
+    }
+
+    private void LateUpdate()
+    {
+        if (!isActive)
+            return;
+
+        if (!freezePlayerTransform)
+            return;
+
+        if (playerRoot == null)
+            return;
+
+        playerRoot.SetPositionAndRotation(frozenPlayerPosition, frozenPlayerRotation);
     }
 
     public void StartCutscene()
@@ -79,7 +99,10 @@ public class PanelCutsceneController : MonoBehaviour
         if (isActive)
             return;
 
-        StartCoroutine(StartRoutine());
+        if (currentRoutine != null)
+            StopCoroutine(currentRoutine);
+
+        currentRoutine = StartCoroutine(StartCutsceneRoutine());
     }
 
     public void FinishCutscene()
@@ -87,23 +110,35 @@ public class PanelCutsceneController : MonoBehaviour
         if (!isActive || isMoving)
             return;
 
-        StartCoroutine(FinishRoutine());
+        if (currentRoutine != null)
+            StopCoroutine(currentRoutine);
+
+        currentRoutine = StartCoroutine(FinishCutsceneRoutine());
     }
 
-    private IEnumerator StartRoutine()
+    private IEnumerator StartCutsceneRoutine()
     {
+        if (playerCamera == null || panelCameraTarget == null)
+            yield break;
+
         isActive = true;
         isMoving = true;
-        cameraAtPanel = false;
 
-        SaveCameraTransform();
+        currentHover = null;
+        hoverText?.Hide();
+
+        SaveOriginalCameraTransform();
+        FreezePlayer();
 
         playerControlLock?.LockControls();
 
         if (playerController != null)
             playerController.SetCameraExternallyControlled(true);
+        
+        interactionSystem?.LockInteraction();
 
-        DisableCameraControlScripts();
+        SetColliders(collidersToDisableWhileActive, false);
+        SetColliders(clickableColliders, false);
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -112,96 +147,94 @@ public class PanelCutsceneController : MonoBehaviour
 
         yield return MoveCameraToPanel();
 
-        cameraAtPanel = true;
-
-        SetClickableColliders(true);
+        SetColliders(clickableColliders, true);
 
         isMoving = false;
-        SetColliders(collidersToDisableWhileActive, false);
-        SetColliders(clickableColliders, true);
+        currentRoutine = null;
     }
-    private void SetColliders(Collider[] colliders, bool enabled)
-    {
-        if (colliders == null)
-            return;
 
-        foreach (Collider col in colliders)
-        {
-            if (col != null)
-                col.enabled = enabled;
-        }
-    }
-    private IEnumerator FinishRoutine()
+    private IEnumerator FinishCutsceneRoutine()
     {
+        if (playerCamera == null)
+            yield break;
+
         isMoving = true;
 
-        SetClickableColliders(false);
+        currentHover = null;
+        hoverText?.Hide();
 
-        cameraAtPanel = false;
+        SetColliders(clickableColliders, false);
 
-        yield return ReturnCameraToPlayer();
-
-        RestoreCameraControlScripts();
+        yield return MoveCameraBackToPlayer();
 
         if (playerController != null)
             playerController.SetCameraExternallyControlled(false);
 
+        playerControlLock?.UnlockControls();
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        playerControlLock?.UnlockControls();
+        SetColliders(collidersToDisableWhileActive, true);
 
         isMoving = false;
         isActive = false;
-        SetColliders(clickableColliders, false);
-        SetColliders(collidersToDisableWhileActive, true);
+
         onCutsceneFinished?.Invoke();
+        interactionSystem?.UnlockInteraction();
+
+        currentRoutine = null;
     }
 
-    private void SaveCameraTransform()
+    private void SaveOriginalCameraTransform()
     {
-        if (playerCamera == null)
-            return;
-
         originalCameraParent = playerCamera.parent;
         originalCameraLocalPosition = playerCamera.localPosition;
         originalCameraLocalRotation = playerCamera.localRotation;
     }
 
+    private void FreezePlayer()
+    {
+        if (!freezePlayerTransform || playerRoot == null)
+            return;
+
+        frozenPlayerPosition = playerRoot.position;
+        frozenPlayerRotation = playerRoot.rotation;
+    }
+
     private IEnumerator MoveCameraToPanel()
     {
-        if (playerCamera == null || cameraTargetPoint == null)
-            yield break;
-
         Vector3 startPosition = playerCamera.position;
         Quaternion startRotation = playerCamera.rotation;
 
-        Vector3 targetPosition = cameraTargetPoint.position;
-        Quaternion targetRotation = cameraTargetPoint.rotation;
+        Vector3 targetPosition = panelCameraTarget.position;
+        Quaternion targetRotation = panelCameraTarget.rotation;
 
         playerCamera.SetParent(null, true);
 
         float time = 0f;
 
-        while (time < cameraMoveDuration)
+        while (time < moveToPanelDuration)
         {
             time += Time.deltaTime;
-            float t = Mathf.Clamp01(time / cameraMoveDuration);
+
+            float t = Mathf.Clamp01(time / moveToPanelDuration);
             t = Smooth(t);
 
-            playerCamera.position = Vector3.Lerp(startPosition, targetPosition, t);
-            playerCamera.rotation = Quaternion.Slerp(startRotation, targetRotation, t);
+            playerCamera.SetPositionAndRotation(
+                Vector3.Lerp(startPosition, targetPosition, t),
+                Quaternion.Slerp(startRotation, targetRotation, t)
+            );
 
             yield return null;
         }
 
-        playerCamera.position = targetPosition;
-        playerCamera.rotation = targetRotation;
+        playerCamera.SetPositionAndRotation(targetPosition, targetRotation);
     }
 
-    private IEnumerator ReturnCameraToPlayer()
+    private IEnumerator MoveCameraBackToPlayer()
     {
-        if (playerCamera == null || originalCameraParent == null)
+        if (originalCameraParent == null)
             yield break;
 
         Vector3 startPosition = playerCamera.position;
@@ -210,66 +243,78 @@ public class PanelCutsceneController : MonoBehaviour
         Vector3 targetPosition = originalCameraParent.TransformPoint(originalCameraLocalPosition);
         Quaternion targetRotation = originalCameraParent.rotation * originalCameraLocalRotation;
 
+        playerCamera.SetParent(null, true);
+
         float time = 0f;
 
-        while (time < cameraMoveDuration)
+        while (time < moveBackDuration)
         {
             time += Time.deltaTime;
-            float t = Mathf.Clamp01(time / cameraMoveDuration);
+
+            float t = Mathf.Clamp01(time / moveBackDuration);
             t = Smooth(t);
 
-            playerCamera.position = Vector3.Lerp(startPosition, targetPosition, t);
-            playerCamera.rotation = Quaternion.Slerp(startRotation, targetRotation, t);
+            playerCamera.SetPositionAndRotation(
+                Vector3.Lerp(startPosition, targetPosition, t),
+                Quaternion.Slerp(startRotation, targetRotation, t)
+            );
 
             yield return null;
         }
 
-        playerCamera.SetParent(originalCameraParent, true);
+        playerCamera.SetPositionAndRotation(targetPosition, targetRotation);
+
+        playerCamera.SetParent(originalCameraParent, false);
         playerCamera.localPosition = originalCameraLocalPosition;
         playerCamera.localRotation = originalCameraLocalRotation;
     }
 
-    private void DisableCameraControlScripts()
+    private void UpdatePanelHoverAndClick()
     {
-        if (cameraControlScriptsToDisable == null)
+        if (raycastCamera == null)
             return;
 
-        disabledScriptsOriginalStates = new bool[cameraControlScriptsToDisable.Length];
+        Ray ray = raycastCamera.ScreenPointToRay(Input.mousePosition);
 
-        for (int i = 0; i < cameraControlScriptsToDisable.Length; i++)
+        PanelClickable hoveredClickable = null;
+
+        if (Physics.Raycast(
+            ray,
+            out RaycastHit hit,
+            raycastDistance,
+            clickableLayerMask,
+            QueryTriggerInteraction.Collide))
         {
-            Behaviour script = cameraControlScriptsToDisable[i];
+            hoveredClickable = hit.collider.GetComponent<PanelClickable>();
+        }
 
-            if (script == null)
-                continue;
+        if (hoveredClickable != currentHover)
+        {
+            currentHover = hoveredClickable;
 
-            disabledScriptsOriginalStates[i] = script.enabled;
-            script.enabled = false;
+            if (currentHover == null)
+                hoverText?.Hide();
+            else
+                hoverText?.Show(currentHover.GetHoverText());
+        }
+        else if (currentHover != null)
+        {
+            hoverText?.Show(currentHover.GetHoverText());
+        }
+
+        if (currentHover != null && Input.GetMouseButtonDown(0))
+        {
+            currentHover.Click();
+            hoverText?.Show(currentHover.GetHoverText());
         }
     }
 
-    private void RestoreCameraControlScripts()
+    private void SetColliders(Collider[] colliders, bool enabled)
     {
-        if (cameraControlScriptsToDisable == null || disabledScriptsOriginalStates == null)
+        if (colliders == null)
             return;
 
-        for (int i = 0; i < cameraControlScriptsToDisable.Length; i++)
-        {
-            Behaviour script = cameraControlScriptsToDisable[i];
-
-            if (script == null)
-                continue;
-
-            script.enabled = disabledScriptsOriginalStates[i];
-        }
-    }
-
-    private void SetClickableColliders(bool enabled)
-    {
-        if (clickableColliders == null)
-            return;
-
-        foreach (Collider col in clickableColliders)
+        foreach (Collider col in colliders)
         {
             if (col != null)
                 col.enabled = enabled;

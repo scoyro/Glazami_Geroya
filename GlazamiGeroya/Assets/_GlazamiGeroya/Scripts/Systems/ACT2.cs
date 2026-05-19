@@ -18,7 +18,10 @@ public class ActTwoTransitionController : MonoBehaviour
 
     [Header("Crisis Audio")]
     [SerializeField] private AudioClip lampExplosionClip;
-    [SerializeField] private AudioClip alarmClip;
+
+    [Tooltip("Отдельный AudioSource сирены. Его потом можно остановить после тушения пожара.")]
+    [SerializeField] private AudioSource alarmAudioSource;
+
     [SerializeField] private AudioClip crisisAmbienceClip;
     [SerializeField] private Transform lampSoundPoint;
 
@@ -119,13 +122,15 @@ public class ActTwoTransitionController : MonoBehaviour
 
     private void PlayCrisisAudio()
     {
-        if (AudioManager.Instance == null)
-            return;
+        if (alarmAudioSource != null)
+        {
+            alarmAudioSource.loop = true;
 
-        if (alarmClip != null)
-            AudioManager.Instance.Play2D(alarmClip);
+            if (!alarmAudioSource.isPlaying)
+                alarmAudioSource.Play();
+        }
 
-        if (crisisAmbienceClip != null)
+        if (crisisAmbienceClip != null && AudioManager.Instance != null)
             AudioManager.Instance.SetAmbience(crisisAmbienceClip, true);
     }
 
