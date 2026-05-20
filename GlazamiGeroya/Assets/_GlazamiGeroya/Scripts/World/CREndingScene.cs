@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class ControlRoomExitDoorExplosionController : MonoBehaviour
+public class DoorExplosionEndingController : MonoBehaviour
 {
     [Header("Door")]
     [SerializeField] private Transform doorTransform;
@@ -33,6 +33,11 @@ public class ControlRoomExitDoorExplosionController : MonoBehaviour
     [SerializeField] private string beforeOpenThought = "Плохое предчувствие...";
 
     [SerializeField] private float thoughtDuration = 2f;
+
+    [Header("Ending")]
+    [SerializeField] private EndingController endingController;
+    [SerializeField] private string endingId = "iof_wrong_solution";
+    [SerializeField] private bool playEndingAutomatically = true;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onDoorStartedOpening;
@@ -95,6 +100,9 @@ public class ControlRoomExitDoorExplosionController : MonoBehaviour
             while (ScreenFader.Instance.IsBusy)
                 yield return null;
         }
+
+        if (playEndingAutomatically && endingController != null)
+            endingController.PlayEnding(endingId);
 
         onSequenceFinished?.Invoke();
 
