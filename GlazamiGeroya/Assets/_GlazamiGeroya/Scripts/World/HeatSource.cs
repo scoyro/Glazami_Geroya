@@ -14,7 +14,10 @@ public class HeatSource : MonoBehaviour
         playerInside = true;
         GameManager.Instance?.TemperatureManager?.EnterHeatSource(this);
     }
-
+    public void SetTemperatureBonus(float value)
+    {
+        temperatureBonus = value;
+    }
     private void OnTriggerExit(Collider other)
     {
         if (!other.CompareTag("Player") || !playerInside)
