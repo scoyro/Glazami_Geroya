@@ -42,7 +42,12 @@ public class UIManager : MonoBehaviour
     [SerializeField] private float maxTemperature = 120f;
     [SerializeField] private float dialogueDuration = 2.5f;
     [SerializeField] private float hintDuration = 4f;
+    [Header("Checklist Visibility")]
+    [SerializeField] private KeyCode checklistHoldKey = KeyCode.Tab;
+    [SerializeField] private float checklistFadeSpeed = 8f;
+    [SerializeField] private CanvasGroup checklistCanvasGroup;
 
+    private bool hasVisibleChecklistTasks;
     public float CurrentTemperature { get; private set; }
 
     private readonly Dictionary<string, Sprite> imageMap = new Dictionary<string, Sprite>();
@@ -73,8 +78,7 @@ public class UIManager : MonoBehaviour
         SetMessage(string.Empty);
         SetTimerText(string.Empty);
 
-        if (checklistPanel != null)
-            checklistPanel.SetActive(false);
+        SetupChecklistPanel();
 
         if (dialoguePanel != null)
             dialoguePanel.SetActive(false);
@@ -167,9 +171,9 @@ public class UIManager : MonoBehaviour
     }
 
     public void ShowThought(string text, float duration = -1f)
-{
-    ShowDialogueLine(" ", text, duration, true);
-}
+    {
+        ShowDialogueLine(" ", text, duration, true);
+    }
 
     public void ShowDialogueLine(string speaker, string text, float duration = -1f)
     {
@@ -392,7 +396,23 @@ public class UIManager : MonoBehaviour
         popupImage.sprite = null;
         imageRoutine = null;
     }
+    private void SetupChecklistPanel()
+    {
+        if (checklistPanel == null)
+            return;
 
+        if (checklistCanvasGroup == null)
+            checklistCanvasGroup = checklistPanel.GetComponent<CanvasGroup>();
+
+        if (checklistCanvasGroup == null)
+            checklistCanvasGroup = checklistPanel.AddComponent<CanvasGroup>();
+
+        checklistCanvasGroup.alpha = 0f;
+        checklistCanvasGroup.interactable = false;
+        checklistCanvasGroup.blocksRaycasts = false;
+
+        checklistPanel.SetActive(false);
+    }
     private void OnDestroy()
     {
         if (gameManager?.EventManager == null)
