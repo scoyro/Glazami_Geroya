@@ -53,6 +53,19 @@ public class ValveFinalSequenceController : MonoBehaviour
     [Header("Events")]
     [SerializeField] private UnityEvent onSuccess;
     [SerializeField] private UnityEvent onFail;
+    [Header("Fail Cinematic")]
+    [SerializeField] private Transform failNodTarget;
+    [SerializeField] private Transform failFallTarget;
+    [SerializeField] private ZoneOutVolumeEffect deathZoneOut;
+    [SerializeField] private float failNodDownDuration = 0.45f;
+    [SerializeField] private float failNodRecoverDuration = 0.35f;
+    [SerializeField] private float failFallDuration = 0.9f;
+    [SerializeField] private float failFadeOutDuration = 0.7f;
+    [SerializeField] private float delayAfterFailFade = 0.3f;
+
+[Header("Ending")]
+[SerializeField] private EndingController endingController;
+[SerializeField] private string failEndingId = "escape_without_valve";
 
     private bool isRunning;
     private bool valveClosed;
@@ -259,14 +272,46 @@ public class ValveFinalSequenceController : MonoBehaviour
 
     private void FinishFail()
     {
+        if (!isRunning)
+            return;
+
+        StartCoroutine(FailRoutine());
+    }
+
+    private IEnumerator FailRoutine()
+    {
+        isRunning = false;
 
         if (failClip != null && valveAudioSource != null)
             valveAudioSource.PlayOneShot(failClip);
 
         if (uiManager != null)
-            uiManager.SetMessage(failMessage, 3f);
+            uiManager.SetMessage(failMessage, 2f);
+
+        if (cameraEffects != null)
+            cameraEffects.SetStress(1f);
+
+        if (valveCutsceneController != null)
+        {
+            yield return valveCutsceneController.DeathFallRoutine(
+                failNodTarget,
+                failFallTarget,
+                failNodDownDuration,
+                failNodRecoverDuration,
+                failFallDuration,
+                deathZoneOut,
+                failFadeOutDuration
+            );
+        }
+
+        yield return new WaitForSeconds(delayAfterFailFade);
+
+        ResetValveHeat();
 
         onFail?.Invoke();
+
+        if (endingController != null)
+            endingController.PlayEnding(failEndingId);
     }
 
     private IEnumerator FadeOutAudioSources()

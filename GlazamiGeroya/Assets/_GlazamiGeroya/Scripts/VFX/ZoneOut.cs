@@ -59,6 +59,32 @@ public class ZoneOutVolumeEffect : MonoBehaviour, IPlayableVfx
 
         routine = null;
     }
+    public Coroutine PlayCustom(float customFadeIn, float customHold, float customFadeOut, float customMaxWeight)
+    {
+        if (volume == null)
+            return null;
+
+        if (routine != null)
+            StopCoroutine(routine);
+
+        gameObject.SetActive(true);
+        routine = StartCoroutine(PlayCustomRoutine(customFadeIn, customHold, customFadeOut, customMaxWeight));
+        return routine;
+    }
+
+    private IEnumerator PlayCustomRoutine(float customFadeIn, float customHold, float customFadeOut, float customMaxWeight)
+    {
+        customMaxWeight = Mathf.Clamp01(customMaxWeight);
+
+        yield return Fade(volume.weight, customMaxWeight, customFadeIn);
+
+        if (customHold > 0f)
+            yield return new WaitForSeconds(customHold);
+
+        yield return Fade(volume.weight, 0f, customFadeOut);
+
+        routine = null;
+    }
 
     private IEnumerator Fade(float from, float to, float duration)
     {
