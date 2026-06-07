@@ -120,18 +120,10 @@ public class UIManager : MonoBehaviour
 
     private void Update()
     {
-        if (!timerRunning)
-            return;
+        UpdateChecklistVisibility();
 
-        countdownRemaining -= Time.deltaTime;
-
-        if (countdownRemaining < 0f)
-            countdownRemaining = 0f;
-
-        SetTimerText($"{timerPrefix}{countdownRemaining:0.0} c");
-
-        if (countdownRemaining <= 0f)
-            timerRunning = false;
+        if (timerRunning)
+            UpdateCountdown();
     }
 
     public void SetPrompt(string text)
@@ -293,7 +285,11 @@ public class UIManager : MonoBehaviour
 
         if (tasks == null)
         {
+            hasVisibleChecklistTasks = false;
             checklistText.text = string.Empty;
+
+            if (checklistCanvasGroup != null)
+                checklistCanvasGroup.alpha = 0f;
 
             if (checklistPanel != null)
                 checklistPanel.SetActive(false);
@@ -307,26 +303,38 @@ public class UIManager : MonoBehaviour
 
         bool hasVisibleTasks = visibleTasks.Count > 0;
 
-        if (checklistPanel != null)
-            checklistPanel.SetActive(hasVisibleTasks);
+        hasVisibleChecklistTasks = hasVisibleTasks;
 
         if (!hasVisibleTasks)
         {
             checklistText.text = string.Empty;
+
+            if (checklistCanvasGroup != null)
+                checklistCanvasGroup.alpha = 0f;
+
+            if (checklistPanel != null)
+                checklistPanel.SetActive(false);
+
             return;
         }
 
+        if (checklistPanel != null)
+            checklistPanel.SetActive(true);
+
         var sb = new StringBuilder();
 
-        sb.AppendLine("<b>Задачи</b>");
+        sb.AppendLine("<b><size=115%>БОРТОВОЙ ЖУРНАЛ</size></b>");
         sb.AppendLine();
 
-        foreach (var task in visibleTasks)
+        for (int i = 0; i < visibleTasks.Count; i++)
         {
+            var task = visibleTasks[i];
+            string number = (i + 1).ToString("00");
+
             if (task.isCompleted)
-                sb.AppendLine($"<color=#888888>[v] {task.title}</color>");
+                sb.AppendLine($"<color=#777777><s>{number}  {task.title}</s></color>");
             else
-                sb.AppendLine($"<color=#FFFFFF>[x] {task.title}</color>");
+                sb.AppendLine($"<color=#FFFFFF>{number}  {task.title}</color>");
         }
 
         checklistText.text = sb.ToString();
@@ -381,6 +389,45 @@ public class UIManager : MonoBehaviour
             StopCoroutine(imageRoutine);
 
         imageRoutine = StartCoroutine(ShowImageRoutine(sprite, duration));
+    }
+    private void UpdateChecklistVisibility()
+    {
+        if (checklistPanel == null || checklistCanvasGroup == null)
+            return;
+
+        if (!hasVisibleChecklistTasks)
+        {
+            checklistCanvasGroup.alpha = 0f;
+            checklistPanel.SetActive(false);
+            return;
+        }
+
+        if (!checklistPanel.activeSelf)
+            checklistPanel.SetActive(true);
+
+        float targetAlpha = Input.GetKey(checklistHoldKey) ? 1f : 0f;
+
+        checklistCanvasGroup.alpha = Mathf.MoveTowards(
+            checklistCanvasGroup.alpha,
+            targetAlpha,
+            Time.deltaTime * checklistFadeSpeed
+        );
+
+        if (checklistCanvasGroup.alpha <= 0.001f && targetAlpha <= 0f)
+            checklistPanel.SetActive(false);
+    }
+
+    private void UpdateCountdown()
+    {
+        countdownRemaining -= Time.deltaTime;
+
+        if (countdownRemaining < 0f)
+            countdownRemaining = 0f;
+
+        SetTimerText($"{timerPrefix}{countdownRemaining:0.0} c");
+
+        if (countdownRemaining <= 0f)
+            timerRunning = false;
     }
 
     private IEnumerator ShowImageRoutine(Sprite sprite, float duration)
