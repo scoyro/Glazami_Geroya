@@ -13,8 +13,8 @@ public class CommanderIntroTrigger : MonoBehaviour
         [TextArea]
         public string text = "Алдар, твоя смена. Журнал на столе. Обойдёшь отсек, всё проверишь — вернёшься ко мне.";
 
-        public float duration = 3.5f;
-        public float delayAfter = 0.25f;
+        public float duration = 4.5f;
+        public float delayAfter = 0.5f;
         public AudioClip audioClip;
         public Sprite avatar;
     }
