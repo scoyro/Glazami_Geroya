@@ -23,7 +23,9 @@ public class CanonicalValveEndingController : MonoBehaviour
     [SerializeField] private GameObject normalHands;
     [SerializeField] private GameObject burnedHands;
     [SerializeField] private Animator burnedHandsAnimator;
-    [SerializeField] private string lowerHandsTrigger = "LowerHands";
+    [SerializeField] private string inspectHandsTrigger = "InspectHands";
+    [SerializeField] private float inspectHandsAnimationDuration = 3.2f;
+    [SerializeField] private float lookAtHandsDelayAfterAnimationStart = 0.25f;
 
     [Header("Walk")]
     [SerializeField] private Transform doorWalkTarget;
@@ -33,8 +35,6 @@ public class CanonicalValveEndingController : MonoBehaviour
     [Header("Timing")]
     [SerializeField] private float delayAfterValveClosed = 0.7f;
     [SerializeField] private float lookAtHandsDuration = 1.1f;
-    [SerializeField] private float holdHandsDuration = 1.6f;
-    [SerializeField] private float lowerHandsDuration = 0.9f;
     [SerializeField] private float lookAtDoorDuration = 1.0f;
     [SerializeField] private float delayBeforeFade = 0.25f;
     [SerializeField] private float fadeOutDuration = 1.2f;
@@ -92,49 +92,50 @@ public class CanonicalValveEndingController : MonoBehaviour
 
         yield return new WaitForSeconds(delayAfterValveClosed);
 
-        // Пока камера ещё у вентиля, незаметно ставим тело Алдара
-        // в фиксированную постановочную позицию.
         if (valveCutsceneController != null && canonicalStartPose != null)
             valveCutsceneController.WarpPlayerRootToPose(canonicalStartPose);
 
-        // Возвращаем камеру к телу, но управление не отдаём.
         if (valveCutsceneController != null)
             yield return valveCutsceneController.ReturnCameraToPlayerBodyOnly();
 
-        // Камера остаётся в голове игрока и только поворачивается вниз на руки.
+        // Включаем руки сразу после возврата камеры в тело.
+        // В этот момент они ещё внизу/вдоль тела, потому что так начинается анимация.
+        ShowBurnedHands();
+        PlayInspectHandsAnimation();
+        onHandsShown?.Invoke();
+
+        // Небольшая задержка, чтобы руки начали подниматься,
+        // и камера не смотрела в пустоту слишком рано.
+        if (lookAtHandsDelayAfterAnimationStart > 0f)
+            yield return new WaitForSeconds(lookAtHandsDelayAfterAnimationStart);
+
+        // Камера поворачивается вниз на руки, пока они поднимаются.
         if (playerCamera != null && lookAtHandsTarget != null)
             yield return RotateCameraToLookTarget(lookAtHandsTarget, lookAtHandsDuration);
 
-        ShowBurnedHands();
-        onHandsShown?.Invoke();
+        // Ждём остаток полной анимации: подъём → осмотр → опускание.
+        float remainingHandsTime =
+            inspectHandsAnimationDuration - lookAtHandsDelayAfterAnimationStart - lookAtHandsDuration;
 
-        yield return new WaitForSeconds(holdHandsDuration);
+        if (remainingHandsTime > 0f)
+            yield return new WaitForSeconds(remainingHandsTime);
 
-        LowerHands();
+        HideBurnedHands();
 
-        yield return new WaitForSeconds(lowerHandsDuration);
-
-        // Камера остаётся в голове игрока и только поворачивается к двери.
         if (playerCamera != null && lookAtDoorTarget != null)
-    yield return RotateCameraToLookTarget(lookAtDoorTarget, lookAtDoorDuration);
+            yield return RotateCameraToLookTarget(lookAtDoorTarget, lookAtDoorDuration);
 
-    // ВАЖНО:
-    // Перед ходьбой разворачиваем тело Алдара в сторону двери.
-    // Камера в этот момент ещё отсоединена и удерживается forceCameraPose,
-    // поэтому игрок не увидит резкого поворота тела.
-    if (valveCutsceneController != null && doorWalkTarget != null)
-        valveCutsceneController.RotatePlayerRootTowards(doorWalkTarget);
+        if (valveCutsceneController != null && doorWalkTarget != null)
+            valveCutsceneController.RotatePlayerRootTowards(doorWalkTarget);
 
-    // Теперь прикрепляем камеру обратно уже к телу,
-    // которое смотрит в сторону двери.
-    if (valveCutsceneController != null)
-        valveCutsceneController.AttachCameraBackToPlayerKeepWorldPose();
+        if (valveCutsceneController != null)
+            valveCutsceneController.AttachCameraBackToPlayerKeepWorldPose();
 
-    if (playerController != null)
-    {
-        playerController.SetCameraExternallyControlled(false);
-        playerController.StartCinematicWalk(doorWalkTarget, woundedWalkSpeed, true);
-    }
+        if (playerController != null)
+        {
+            playerController.SetCameraExternallyControlled(false);
+            playerController.StartCinematicWalk(doorWalkTarget, woundedWalkSpeed, true);
+        }
 
         playerControlLock?.UnlockControls();
 
@@ -170,6 +171,38 @@ public class CanonicalValveEndingController : MonoBehaviour
 
         isRunning = false;
         routine = null;
+    }
+
+    private void ShowBurnedHands()
+    {
+        if (normalHands != null)
+            normalHands.SetActive(false);
+
+        if (burnedHands != null)
+            burnedHands.SetActive(true);
+
+        if (burnedHandsAnimator != null)
+        {
+            burnedHandsAnimator.Rebind();
+            burnedHandsAnimator.Update(0f);
+        }
+    }
+
+    private void PlayInspectHandsAnimation()
+    {
+        if (burnedHandsAnimator == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(inspectHandsTrigger))
+            return;
+
+        burnedHandsAnimator.ResetTrigger(inspectHandsTrigger);
+        burnedHandsAnimator.SetTrigger(inspectHandsTrigger);
+    }
+
+    private void HideBurnedHands()
+    {
+
     }
 
     private IEnumerator RotateCameraToLookTarget(Transform lookTarget, float duration)
@@ -235,27 +268,6 @@ public class CanonicalValveEndingController : MonoBehaviour
 
             yield return null;
         }
-    }
-
-    private void ShowBurnedHands()
-    {
-        if (normalHands != null)
-            normalHands.SetActive(false);
-
-        if (burnedHands != null)
-            burnedHands.SetActive(true);
-    }
-
-    private void LowerHands()
-    {
-        if (burnedHandsAnimator != null && !string.IsNullOrWhiteSpace(lowerHandsTrigger))
-        {
-            burnedHandsAnimator.SetTrigger(lowerHandsTrigger);
-            return;
-        }
-
-        if (burnedHands != null)
-            burnedHands.SetActive(false);
     }
 
     private void StartBreathing()
