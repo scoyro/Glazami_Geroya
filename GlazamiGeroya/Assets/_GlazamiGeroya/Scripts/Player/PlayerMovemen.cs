@@ -68,6 +68,8 @@ public class PlayerController : MonoBehaviour
 
         if (cameraTransform != null)
             defaultYPos = cameraTransform.localPosition.y;
+
+        SyncLookRotationFromCamera();
     }
 
     private void Update()
@@ -108,11 +110,15 @@ public class PlayerController : MonoBehaviour
 
     public void UnlockControls()
     {
+        SyncLookRotationFromCamera();
         controlsLocked = false;
     }
 
     public void SetCameraExternallyControlled(bool value)
     {
+        if (!value)
+            SyncLookRotationFromCamera();
+
         cameraExternallyControlled = value;
 
         if (value)
@@ -121,6 +127,34 @@ public class PlayerController : MonoBehaviour
             moveZ = 0f;
             timer = 0f;
         }
+    }
+
+    public void SyncLookRotationFromCamera()
+    {
+        if (cameraTransform == null)
+            return;
+
+        float currentPitch = NormalizeAngle(cameraTransform.localEulerAngles.x);
+        xRotation = Mathf.Clamp(currentPitch, minY, maxY);
+        cameraTransform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+    }
+
+    public void SetExternalLookRotation(Quaternion playerRotation, float cameraPitch)
+    {
+        transform.rotation = playerRotation;
+
+        xRotation = Mathf.Clamp(cameraPitch, minY, maxY);
+
+        if (cameraTransform != null)
+            cameraTransform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+    }
+
+    private float NormalizeAngle(float angle)
+    {
+        if (angle > 180f)
+            angle -= 360f;
+
+        return angle;
     }
 
     private void UpdateBodyLook()
