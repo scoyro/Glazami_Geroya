@@ -34,21 +34,49 @@ public class PlayerController : MonoBehaviour
     public float bobAmount = 0.08f;
     public float returnSpeed = 5f;
 
-    private float defaultYPos;
-    private float timer;
+    [Header("Cinematic Walk")]
+    [SerializeField] private float cinematicTurnSpeed = 1.5f;
+    [SerializeField] private float cinematicStopDistance = 0.8f;
+
+    [Header("Cinematic Limp Camera")]
+    [SerializeField] private float limpBobSpeed = 4.5f;
+    [SerializeField] private float limpVerticalAmount = 0.16f;
+    [SerializeField] private float limpSideAmount = 0.055f;
+    [SerializeField] private float limpTiltAmount = 7f;
+    [SerializeField] private float limpForwardTiltAmount = 3f;
+    [SerializeField] private float limpReturnSpeed = 4f;
+    private Quaternion cinematicBaseCameraLocalRotation;
+    private Vector3 cinematicBaseCameraLocalPosition;
 
     private CharacterController controller;
     private Vector3 velocity;
-    private float xRotation = 0f;
 
+    private float xRotation = 0f;
     private float moveX;
     private float moveZ;
+
+    private float defaultYPos;
+    private Vector3 defaultCameraLocalPosition;
+    private Quaternion defaultCameraLocalRotation;
+    private float timer;
 
     private bool controlsLocked;
     private bool cameraExternallyControlled;
 
+    private bool cinematicWalkMode;
+    private Transform cinematicWalkTarget;
+    private float cinematicWalkSpeed = 1f;
+    private bool cinematicRequireW = true;
+    private bool cinematicReachedTarget;
+    private bool suppressNormalHeadBob;
+    [Header("Cinematic Limp Preview")]
+    [SerializeField] private bool previewCinematicLimpCamera = false;
+    [SerializeField] private bool previewRequiresW = true;
+    [SerializeField] private bool previewLockMovement = true;
     public bool ControlsLocked => controlsLocked;
     public bool CameraExternallyControlled => cameraExternallyControlled;
+    public bool CinematicWalkMode => cinematicWalkMode;
+    public bool CinematicReachedTarget => cinematicReachedTarget;
 
     private void Start()
     {
@@ -67,25 +95,115 @@ public class PlayerController : MonoBehaviour
             GameManager.Instance.EventManager.OnCrisisModeChanged += SetCrisisMode;
 
         if (cameraTransform != null)
+        {
+            defaultCameraLocalPosition = cameraTransform.localPosition;
+            defaultCameraLocalRotation = cameraTransform.localRotation;
             defaultYPos = cameraTransform.localPosition.y;
+        }
+        cinematicBaseCameraLocalPosition = defaultCameraLocalPosition;
+        cinematicBaseCameraLocalRotation = defaultCameraLocalRotation;
+    }
+    public void SetNormalHeadBobSuppressed(bool value)
+    {
+        suppressNormalHeadBob = value;
+
+        if (value)
+            ResetHeadBobImmediate();
     }
 
     private void Update()
+{
+    if (previewCinematicLimpCamera)
     {
-        if (!controlsLocked && !cameraExternallyControlled)
-            Look();
-
-        Move();
-
-        if (cameraExternallyControlled)
-            return;
-
-        if (!controlsLocked)
-            HandleHeadBob();
+        if (!previewLockMovement)
+            Move();
         else
-            ResetHeadBob();
+            ApplyGravityOnly();
+
+        HandleCinematicLimpPreview();
+        return;
     }
 
+    if (!controlsLocked && !cameraExternallyControlled && !cinematicWalkMode)
+        Look();
+
+    Move();
+
+    if (cameraExternallyControlled)
+        return;
+
+    if (cinematicWalkMode)
+    {
+        HandleCinematicLimpBob();
+        return;
+    }
+
+    if (suppressNormalHeadBob)
+    {
+        ResetHeadBob();
+        return;
+    }
+
+    if (!controlsLocked)
+        HandleHeadBob();
+    else
+        ResetHeadBob();
+}
+    private void HandleCinematicLimpPreview()
+{
+    if (cameraTransform == null)
+        return;
+
+    if (previewRequiresW && !Input.GetKey(KeyCode.W))
+    {
+        ResetCinematicLimpBob();
+        return;
+    }
+
+    // Чтобы preview работал даже без StartCinematicWalk()
+    cinematicBaseCameraLocalPosition = defaultCameraLocalPosition;
+    cinematicBaseCameraLocalRotation = defaultCameraLocalRotation;
+
+    timer += Time.deltaTime * limpBobSpeed;
+
+    float step = Mathf.Sin(timer);
+    float heavyDrop = Mathf.Abs(step);
+    float side = Mathf.Sin(timer * 0.5f);
+
+    Vector3 pos = cinematicBaseCameraLocalPosition;
+    pos.y -= heavyDrop * limpVerticalAmount;
+    pos.x += side * limpSideAmount;
+
+    cameraTransform.localPosition = Vector3.Lerp(
+        cameraTransform.localPosition,
+        pos,
+        Time.deltaTime * 12f
+    );
+
+    float tiltZ = side * limpTiltAmount;
+    float tiltX = -heavyDrop * limpForwardTiltAmount;
+
+    Quaternion targetRotation =
+        cinematicBaseCameraLocalRotation * Quaternion.Euler(tiltX, 0f, tiltZ);
+
+    cameraTransform.localRotation = Quaternion.Slerp(
+        cameraTransform.localRotation,
+        targetRotation,
+        Time.deltaTime * 10f
+    );
+}
+private void ApplyGravityOnly()
+{
+    if (controller == null)
+        return;
+
+    ApplyGravity();
+
+    Vector3 finalMove = Vector3.zero;
+    finalMove.y = velocity.y;
+
+    controller.Move(finalMove * Time.deltaTime);
+}
     private void LateUpdate()
     {
         if (controlsLocked || cameraExternallyControlled)
@@ -121,6 +239,50 @@ public class PlayerController : MonoBehaviour
             moveZ = 0f;
             timer = 0f;
         }
+    }
+
+    public void StartCinematicWalk(Transform target, float walkSpeed, bool requireW)
+    {
+        if (target == null)
+            return;
+
+        cinematicWalkMode = true;
+        cinematicWalkTarget = target;
+        cinematicWalkSpeed = Mathf.Max(0f, walkSpeed);
+        cinematicRequireW = requireW;
+        cinematicReachedTarget = false;
+
+        suppressNormalHeadBob = true;
+
+        controlsLocked = false;
+        cameraExternallyControlled = false;
+
+        moveX = 0f;
+        moveZ = 0f;
+        timer = 0f;
+
+        if (cameraTransform != null)
+        {
+            // ВАЖНО:
+            // Берём текущий поворот камеры как базовый.
+            // То есть если камера уже посмотрела на дверь,
+            // хромающий bob будет накладываться поверх этого взгляда.
+            cinematicBaseCameraLocalPosition = cameraTransform.localPosition;
+            cinematicBaseCameraLocalRotation = cameraTransform.localRotation;
+        }
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+    public void StopCinematicWalk()
+    {
+        cinematicWalkMode = false;
+        cinematicWalkTarget = null;
+        cinematicReachedTarget = false;
+
+        moveX = 0f;
+        moveZ = 0f;
+        timer = 0f;
     }
 
     private void UpdateBodyLook()
@@ -164,6 +326,12 @@ public class PlayerController : MonoBehaviour
         if (controller == null)
             return;
 
+        if (cinematicWalkMode)
+        {
+            MoveCinematicWalk();
+            return;
+        }
+
         if (controlsLocked || cameraExternallyControlled)
         {
             moveX = 0f;
@@ -187,15 +355,70 @@ public class PlayerController : MonoBehaviour
         if (!controlsLocked && !cameraExternallyControlled && isCrisis && Input.GetKey(sprintKey))
             currentSpeed *= crisisSprintMultiplier;
 
-        if (controller.isGrounded && velocity.y < 0f)
-            velocity.y = -2f;
-
-        velocity.y += gravity * Time.deltaTime;
+        ApplyGravity();
 
         Vector3 finalMove = horizontalMove * currentSpeed;
         finalMove.y = velocity.y;
 
         controller.Move(finalMove * Time.deltaTime);
+    }
+
+    private void MoveCinematicWalk()
+    {
+        moveX = 0f;
+        moveZ = 0f;
+
+        Vector3 horizontalMove = Vector3.zero;
+
+        if (cinematicWalkTarget != null)
+        {
+            Vector3 toTarget = cinematicWalkTarget.position - transform.position;
+            toTarget.y = 0f;
+
+            float distance = toTarget.magnitude;
+
+            if (distance <= cinematicStopDistance)
+            {
+                cinematicReachedTarget = true;
+            }
+            else
+            {
+                bool wantsToMove = !cinematicRequireW || Input.GetKey(KeyCode.W);
+
+                if (wantsToMove)
+                {
+                    Vector3 direction = toTarget.normalized;
+
+                    Quaternion targetRotation = Quaternion.LookRotation(direction);
+                    transform.rotation = Quaternion.Slerp(
+                        transform.rotation,
+                        targetRotation,
+                        Time.deltaTime * cinematicTurnSpeed
+                    );
+
+                    horizontalMove = transform.forward * cinematicWalkSpeed;
+                    moveZ = 1f;
+                }
+            }
+        }
+
+        ApplyGravity();
+
+        Vector3 finalMove = horizontalMove;
+        finalMove.y = velocity.y;
+
+        controller.Move(finalMove * Time.deltaTime);
+    }
+
+    private void ApplyGravity()
+    {
+        if (controller == null)
+            return;
+
+        if (controller.isGrounded && velocity.y < 0f)
+            velocity.y = -2f;
+
+        velocity.y += gravity * Time.deltaTime;
     }
 
     private void SetCrisisMode(bool enabled)
@@ -216,13 +439,79 @@ public class PlayerController : MonoBehaviour
             float bob = Mathf.Sin(timer) * bobAmount;
 
             Vector3 pos = cameraTransform.localPosition;
+            pos.x = Mathf.Lerp(pos.x, defaultCameraLocalPosition.x, Time.deltaTime * returnSpeed);
             pos.y = defaultYPos + bob;
+            pos.z = Mathf.Lerp(pos.z, defaultCameraLocalPosition.z, Time.deltaTime * returnSpeed);
+
             cameraTransform.localPosition = pos;
         }
         else
         {
             ResetHeadBob();
         }
+    }
+
+    private void HandleCinematicLimpBob()
+    {
+        if (cameraTransform == null)
+            return;
+
+        bool isTryingToMove = !cinematicRequireW || Input.GetKey(KeyCode.W);
+        bool canBob = isTryingToMove && !cinematicReachedTarget && controller != null && controller.isGrounded;
+
+        if (!canBob)
+        {
+            ResetCinematicLimpBob();
+            return;
+        }
+
+        timer += Time.deltaTime * limpBobSpeed;
+
+        float step = Mathf.Sin(timer);
+        float heavyDrop = Mathf.Abs(step);
+        float side = Mathf.Sin(timer * 0.5f);
+
+        Vector3 pos = cinematicBaseCameraLocalPosition;
+        pos.y -= heavyDrop * limpVerticalAmount;
+        pos.x += side * limpSideAmount;
+
+        cameraTransform.localPosition = Vector3.Lerp(
+            cameraTransform.localPosition,
+            pos,
+            Time.deltaTime * 12f
+        );
+
+        float tiltZ = side * limpTiltAmount;
+        float tiltX = -heavyDrop * limpForwardTiltAmount;
+
+        Quaternion targetRotation =
+            cinematicBaseCameraLocalRotation * Quaternion.Euler(tiltX, 0f, tiltZ);
+
+        cameraTransform.localRotation = Quaternion.Slerp(
+            cameraTransform.localRotation,
+            targetRotation,
+            Time.deltaTime * 10f
+        );
+    }
+
+    private void ResetCinematicLimpBob()
+    {
+        if (cameraTransform == null)
+            return;
+
+        timer = 0f;
+
+        cameraTransform.localPosition = Vector3.Lerp(
+            cameraTransform.localPosition,
+            cinematicBaseCameraLocalPosition,
+            Time.deltaTime * limpReturnSpeed
+        );
+
+        cameraTransform.localRotation = Quaternion.Slerp(
+            cameraTransform.localRotation,
+            cinematicBaseCameraLocalRotation,
+            Time.deltaTime * limpReturnSpeed
+        );
     }
 
     private void ResetHeadBob()
@@ -233,8 +522,21 @@ public class PlayerController : MonoBehaviour
         timer = 0f;
 
         Vector3 pos = cameraTransform.localPosition;
+        pos.x = Mathf.Lerp(pos.x, defaultCameraLocalPosition.x, Time.deltaTime * returnSpeed);
         pos.y = Mathf.Lerp(pos.y, defaultYPos, Time.deltaTime * returnSpeed);
+        pos.z = Mathf.Lerp(pos.z, defaultCameraLocalPosition.z, Time.deltaTime * returnSpeed);
+
         cameraTransform.localPosition = pos;
+    }
+
+    private void ResetHeadBobImmediate()
+    {
+        if (cameraTransform == null)
+            return;
+
+        timer = 0f;
+        cameraTransform.localPosition = defaultCameraLocalPosition;
+        cameraTransform.localRotation = defaultCameraLocalRotation;
     }
 
     private void OnDestroy()
