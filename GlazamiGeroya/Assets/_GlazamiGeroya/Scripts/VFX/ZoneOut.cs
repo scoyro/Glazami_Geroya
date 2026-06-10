@@ -38,6 +38,20 @@ public class ZoneOutVolumeEffect : MonoBehaviour, IPlayableVfx
 
         gameObject.SetActive(true);
         routine = StartCoroutine(PlayRoutine());
+    }   
+    public void SetWeight(float weight)
+    {
+        if (volume == null)
+            return;
+
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
+        gameObject.SetActive(true);
+        volume.weight = Mathf.Clamp01(weight);
     }
 
     public void Stop()

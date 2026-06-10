@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.Events;
 
 public class CanonicalValveEndingController : MonoBehaviour
@@ -57,12 +58,36 @@ public class CanonicalValveEndingController : MonoBehaviour
     [SerializeField] private WalkThoughtPoint[] walkThoughts;
     [SerializeField] private float thoughtCheckInterval = 0.05f;
 
-    [Header("Walk Thought Fade")]
-    [SerializeField] private bool fadeDuringWalkThoughts = true;
-    [SerializeField] private float thoughtFadeOutDuration = 0.45f;
-    [SerializeField] private float thoughtBlackHoldDuration = 1.2f;
-    [SerializeField] private float thoughtFadeInDuration = 0.8f;
-    [SerializeField] private float thoughtDelayAfterFade = 0.15f;
+    [Header("Walk ZoneOut")]
+    [SerializeField] private bool useWalkZoneOut = true;
+    [SerializeField] private ZoneOutVolumeEffect walkZoneOut;
+    [SerializeField] private float walkZoneOutMinWeight = 0.08f;
+    [SerializeField] private float walkZoneOutMaxWeight = 0.38f;
+    [SerializeField] private float walkZoneOutProgressAdd = 0.22f;
+    [SerializeField] private float walkZoneOutPulseAmount = 0.08f;
+    [SerializeField] private float walkZoneOutPulseSpeed = 0.75f;
+
+    [Header("Walk Ambient Mixer")]
+    [SerializeField] private bool useWalkAmbientMixer = true;
+    [SerializeField] private AudioMixer audioMixer;
+    [SerializeField] private string ambientVolumeParameter = "AmbientVolume";
+
+    [SerializeField] private float ambientMinVolumeDb = -18f;
+    [SerializeField] private float ambientMaxVolumeDb = -4f;
+    [SerializeField] private float ambientVolumeSmoothSpeed = 2.5f;
+    [SerializeField] private float ambientProgressPower = 1.4f;
+
+    [SerializeField] private bool fadeAmbientAfterWalk = true;
+    [SerializeField] private float ambientFadeAfterWalkTargetDb = -18f;
+    [SerializeField] private float ambientFadeAfterWalkDuration = 2f;
+
+    [Header("Walk Thought ZoneOut Peak")]
+    [SerializeField] private float thoughtZoneOutPeakWeight = 1f;
+    [SerializeField] private float thoughtZoneOutPeakInDuration = 0.25f;
+    [SerializeField] private float thoughtZoneOutPeakHoldDuration = 0.8f;
+    [SerializeField] private float thoughtZoneOutPeakOutDuration = 0.75f;
+    [SerializeField] private float thoughtDelayBeforeText = 0.15f;
+    [SerializeField] private float thoughtDelayAfterZoneOut = 0.15f;
 
     [Header("Timing")]
     [SerializeField] private float delayAfterValveClosed = 0.7f;
@@ -87,6 +112,13 @@ public class CanonicalValveEndingController : MonoBehaviour
     [SerializeField] private UnityEvent onHandsShown;
     [SerializeField] private UnityEvent onWalkStarted;
     [SerializeField] private UnityEvent onDoorReached;
+
+    private Coroutine walkZoneOutRoutine;
+    private bool walkZoneOutPaused;
+    private float currentWalkZoneOutWeight;
+
+    private Coroutine walkAmbientMixerRoutine;
+    private float currentAmbientVolumeDb;
 
     private bool isRunning;
     private Coroutine routine;
@@ -128,20 +160,24 @@ public class CanonicalValveEndingController : MonoBehaviour
         // в фиксированную постановочную позицию.
         if (valveCutsceneController != null && canonicalStartPose != null)
             valveCutsceneController.WarpPlayerRootToPose(canonicalStartPose);
-            ShowBurnedHands();
+
+        // Оставлено как у тебя:
+        // руки включаются до возврата камеры к телу, чтобы не появляться на глазах.
+        ShowBurnedHands();
 
         // Возвращаем камеру к телу, но управление не отдаём.
         if (valveCutsceneController != null)
             yield return valveCutsceneController.ReturnCameraToPlayerBodyOnly();
 
-        // Включаем руки сразу после возврата камеры в тело.
-        // В начале анимации руки должны быть внизу / вдоль тела.
-        
-        PlayInspectHandsAnimation();
-        onHandsShown?.Invoke();
+        // Один общий ZoneOut запускается уже здесь:
+        // он работает на осмотре рук, взгляде на дверь и ходьбе.
+        StartWalkZoneOut();
 
         if (lookAtHandsDelayAfterAnimationStart > 0f)
             yield return new WaitForSeconds(lookAtHandsDelayAfterAnimationStart);
+
+        PlayInspectHandsAnimation();
+        onHandsShown?.Invoke();
 
         // Камера смотрит на руки, пока они поднимаются.
         if (playerCamera != null && lookAtHandsTarget != null)
@@ -155,8 +191,6 @@ public class CanonicalValveEndingController : MonoBehaviour
         if (remainingHandsTime > 0f)
             yield return new WaitForSeconds(remainingHandsTime);
 
-       
-
         // Камера смотрит на дверь.
         if (playerCamera != null && lookAtDoorTarget != null)
             yield return RotateCameraToLookTarget(lookAtDoorTarget, lookAtDoorDuration);
@@ -164,7 +198,11 @@ public class CanonicalValveEndingController : MonoBehaviour
         // Перед ходьбой разворачиваем тело Алдара в сторону двери.
         if (valveCutsceneController != null && doorWalkTarget != null)
             valveCutsceneController.RotatePlayerRootTowards(doorWalkTarget);
-         HideBurnedHands();
+
+        // Оставлено как у тебя:
+        // руки выключаются до прикрепления камеры обратно.
+        HideBurnedHands();
+
         // Прикрепляем камеру обратно к телу.
         if (valveCutsceneController != null)
             valveCutsceneController.AttachCameraBackToPlayerKeepWorldPose();
@@ -178,11 +216,16 @@ public class CanonicalValveEndingController : MonoBehaviour
             playerController.StartCinematicWalk(doorWalkTarget, woundedWalkSpeed, true);
         }
 
+        StartWalkAmbientMixer();
+
         playerControlLock?.UnlockControls();
 
         onWalkStarted?.Invoke();
 
         yield return WaitUntilDoorReached();
+
+        StopWalkZoneOut();
+        StopWalkAmbientMixer();
 
         if (playerController != null)
         {
@@ -257,28 +300,36 @@ public class CanonicalValveEndingController : MonoBehaviour
 
         playerControlLock?.LockControls();
 
-        // Сначала экран темнеет, как будто Алдар почти теряет сознание.
-        if (fadeDuringWalkThoughts && ScreenFader.Instance != null)
+        walkZoneOutPaused = true;
+
+        if (useWalkZoneOut && walkZoneOut != null)
         {
-            ScreenFader.Instance.FadeOut(null, thoughtFadeOutDuration);
+            // На момент мысли эффект доходит до максимума.
+            yield return FadeWalkZoneOutTo(thoughtZoneOutPeakWeight, thoughtZoneOutPeakInDuration);
 
-            yield return new WaitForSeconds(thoughtFadeOutDuration);
+            if (thoughtDelayBeforeText > 0f)
+                yield return new WaitForSeconds(thoughtDelayBeforeText);
 
-            // Мысль появляется уже в темноте.
+            // Мысль появляется уже на пике состояния.
             ShowWalkThought(point.thoughtText);
 
-            yield return new WaitForSeconds(thoughtBlackHoldDuration);
+            if (thoughtZoneOutPeakHoldDuration > 0f)
+                yield return new WaitForSeconds(thoughtZoneOutPeakHoldDuration);
 
-            ScreenFader.Instance.FadeIn(null, thoughtFadeInDuration);
+            // Возвращаемся к фоновому уровню эффекта.
+            float backgroundWeight = CalculateWalkZoneOutWeight();
+            yield return FadeWalkZoneOutTo(backgroundWeight, thoughtZoneOutPeakOutDuration);
 
-            yield return new WaitForSeconds(thoughtFadeInDuration + thoughtDelayAfterFade);
+            if (thoughtDelayAfterZoneOut > 0f)
+                yield return new WaitForSeconds(thoughtDelayAfterZoneOut);
         }
         else
         {
             ShowWalkThought(point.thoughtText);
-
             yield return new WaitForSeconds(point.stopDuration);
         }
+
+        walkZoneOutPaused = false;
 
         // Если сцена уже закончилась или игрок дошёл до двери — ходьбу не возобновляем.
         if (playerController != null && playerController.CinematicReachedTarget)
@@ -290,6 +341,208 @@ public class CanonicalValveEndingController : MonoBehaviour
             playerController.StartCinematicWalk(doorWalkTarget, woundedWalkSpeed, true);
             playerControlLock?.UnlockControls();
         }
+    }
+
+    private void StartWalkZoneOut()
+    {
+        if (!useWalkZoneOut || walkZoneOut == null)
+            return;
+
+        if (walkZoneOutRoutine != null)
+            StopCoroutine(walkZoneOutRoutine);
+
+        walkZoneOutPaused = false;
+        currentWalkZoneOutWeight = walkZoneOutMinWeight;
+
+        walkZoneOut.SetWeight(currentWalkZoneOutWeight);
+
+        walkZoneOutRoutine = StartCoroutine(WalkZoneOutRoutine());
+    }
+
+    private void StopWalkZoneOut()
+    {
+        if (walkZoneOutRoutine != null)
+        {
+            StopCoroutine(walkZoneOutRoutine);
+            walkZoneOutRoutine = null;
+        }
+
+        walkZoneOutPaused = false;
+        currentWalkZoneOutWeight = 0f;
+
+        if (walkZoneOut != null)
+            walkZoneOut.SetWeight(0f);
+    }
+
+    private IEnumerator WalkZoneOutRoutine()
+    {
+        while (isRunning)
+        {
+            if (playerController != null && playerController.CinematicReachedTarget)
+                break;
+
+            if (!walkZoneOutPaused && walkZoneOut != null)
+            {
+                currentWalkZoneOutWeight = CalculateWalkZoneOutWeight();
+                walkZoneOut.SetWeight(currentWalkZoneOutWeight);
+            }
+
+            yield return null;
+        }
+
+        walkZoneOutRoutine = null;
+    }
+
+    private float CalculateWalkZoneOutWeight()
+    {
+        float progress = GetWalkProgress01();
+
+        float pulse = Mathf.Sin(Time.time * walkZoneOutPulseSpeed * Mathf.PI * 2f);
+        pulse = (pulse + 1f) * 0.5f;
+
+        float progressWeight = progress * walkZoneOutProgressAdd;
+        float pulseWeight = pulse * walkZoneOutPulseAmount;
+
+        float weight =
+            walkZoneOutMinWeight +
+            progressWeight +
+            pulseWeight;
+
+        return Mathf.Clamp(weight, walkZoneOutMinWeight, walkZoneOutMaxWeight);
+    }
+
+    private IEnumerator FadeWalkZoneOutTo(float targetWeight, float duration)
+    {
+        if (walkZoneOut == null)
+            yield break;
+
+        targetWeight = Mathf.Clamp01(targetWeight);
+
+        float startWeight = currentWalkZoneOutWeight;
+
+        if (duration <= 0f)
+        {
+            currentWalkZoneOutWeight = targetWeight;
+            walkZoneOut.SetWeight(currentWalkZoneOutWeight);
+            yield break;
+        }
+
+        float time = 0f;
+
+        while (time < duration)
+        {
+            time += Time.deltaTime;
+
+            float t = Mathf.Clamp01(time / duration);
+            t = Smooth(t);
+
+            currentWalkZoneOutWeight = Mathf.Lerp(startWeight, targetWeight, t);
+            walkZoneOut.SetWeight(currentWalkZoneOutWeight);
+
+            yield return null;
+        }
+
+        currentWalkZoneOutWeight = targetWeight;
+        walkZoneOut.SetWeight(currentWalkZoneOutWeight);
+    }
+
+    private void StartWalkAmbientMixer()
+    {
+        if (!useWalkAmbientMixer || audioMixer == null)
+            return;
+
+        if (walkAmbientMixerRoutine != null)
+            StopCoroutine(walkAmbientMixerRoutine);
+
+        currentAmbientVolumeDb = ambientMinVolumeDb;
+        audioMixer.SetFloat(ambientVolumeParameter, currentAmbientVolumeDb);
+
+        walkAmbientMixerRoutine = StartCoroutine(WalkAmbientMixerRoutine());
+    }
+
+    private void StopWalkAmbientMixer()
+    {
+        if (walkAmbientMixerRoutine != null)
+        {
+            StopCoroutine(walkAmbientMixerRoutine);
+            walkAmbientMixerRoutine = null;
+        }
+
+        if (!fadeAmbientAfterWalk || audioMixer == null)
+            return;
+
+        walkAmbientMixerRoutine = StartCoroutine(FadeAmbientMixerTo(
+            ambientFadeAfterWalkTargetDb,
+            ambientFadeAfterWalkDuration
+        ));
+    }
+
+    private IEnumerator FadeAmbientMixerTo(float targetVolumeDb, float duration)
+    {
+        if (audioMixer == null)
+            yield break;
+
+        float startVolumeDb = currentAmbientVolumeDb;
+
+        if (duration <= 0f)
+        {
+            currentAmbientVolumeDb = targetVolumeDb;
+            audioMixer.SetFloat(ambientVolumeParameter, currentAmbientVolumeDb);
+            yield break;
+        }
+
+        float time = 0f;
+
+        while (time < duration)
+        {
+            time += Time.deltaTime;
+
+            float t = Mathf.Clamp01(time / duration);
+            t = Smooth(t);
+
+            currentAmbientVolumeDb = Mathf.Lerp(startVolumeDb, targetVolumeDb, t);
+            audioMixer.SetFloat(ambientVolumeParameter, currentAmbientVolumeDb);
+
+            yield return null;
+        }
+
+        currentAmbientVolumeDb = targetVolumeDb;
+        audioMixer.SetFloat(ambientVolumeParameter, currentAmbientVolumeDb);
+
+        walkAmbientMixerRoutine = null;
+    }
+
+    private IEnumerator WalkAmbientMixerRoutine()
+    {
+        while (isRunning)
+        {
+            if (playerController != null && playerController.CinematicReachedTarget)
+                break;
+
+            float progress = GetWalkProgress01();
+
+            // 1 = линейно.
+            // 1.4–1.8 = сильнее нарастает ближе к двери.
+            float poweredProgress = Mathf.Pow(progress, ambientProgressPower);
+
+            float targetVolumeDb = Mathf.Lerp(
+                ambientMinVolumeDb,
+                ambientMaxVolumeDb,
+                poweredProgress
+            );
+
+            currentAmbientVolumeDb = Mathf.Lerp(
+                currentAmbientVolumeDb,
+                targetVolumeDb,
+                Time.deltaTime * ambientVolumeSmoothSpeed
+            );
+
+            audioMixer.SetFloat(ambientVolumeParameter, currentAmbientVolumeDb);
+
+            yield return null;
+        }
+
+        walkAmbientMixerRoutine = null;
     }
 
     private float GetWalkProgress01()
