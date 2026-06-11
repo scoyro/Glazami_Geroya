@@ -27,6 +27,10 @@ public class InteractionTarget : MonoBehaviour
 
     public string PromptText => promptText;
     public InteractionData Data => interactionData;
+    public void SetPromptText(string text)
+    {
+        promptText = text;
+    }
 
     public bool CanInteract(GameStateManager stateManager)
     {

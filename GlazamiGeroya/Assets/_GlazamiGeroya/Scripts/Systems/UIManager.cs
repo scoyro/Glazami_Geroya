@@ -17,50 +17,74 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject checklistPanel;
     [SerializeField] private TMP_Text checklistText;
     [SerializeField] private TMP_Text messageText;
-    [SerializeField] private TMP_Text thoughtText;
+
+    [Header("Dialogue / Thoughts Panel")]
+    [SerializeField] private GameObject dialoguePanel;
+    [SerializeField] private TMP_Text speakerText;
+    [SerializeField] private TMP_Text dialogueText;
+
     [Header("Typing")]
-    [SerializeField] private float thoughtTypingSpeed = 0.035f;
+    [SerializeField] private float dialogueTypingSpeed = 0.035f;
+
     [SerializeField] private TMP_Text hintText;
     [SerializeField] private TMP_Text timerText;
     [SerializeField] private Slider temperatureSlider;
     [SerializeField] private TMP_Text temperatureValueText;
     [SerializeField] private Gradient temperatureTextGradient;
+
     [Header("Image Popup")]
     [SerializeField] private GameObject imagePopupPanel;
     [SerializeField] private Image popupImage;
     [SerializeField] private List<UiImageEntry> imageEntries = new List<UiImageEntry>();
 
-    private readonly Dictionary<string, Sprite> imageMap = new Dictionary<string, Sprite>();
-    private Coroutine imageRoutine;
-
-
     [Header("Settings")]
     [SerializeField] private float startTemperature = 40f;
     [SerializeField] private float maxTemperature = 120f;
-    [SerializeField] private float thoughtDuration = 2.5f;
+    [SerializeField] private float dialogueDuration = 2.5f;
     [SerializeField] private float hintDuration = 4f;
+    [Header("Checklist Visibility")]
+    [SerializeField] private KeyCode checklistHoldKey = KeyCode.Tab;
+    [SerializeField] private float checklistFadeSpeed = 8f;
+    [SerializeField] private CanvasGroup checklistCanvasGroup;
 
+    private bool hasVisibleChecklistTasks;
     public float CurrentTemperature { get; private set; }
 
+    private readonly Dictionary<string, Sprite> imageMap = new Dictionary<string, Sprite>();
+
     private Coroutine messageRoutine;
-    private GameManager gameManager;
-    private Coroutine thoughtRoutine;
+    private Coroutine dialogueRoutine;
     private Coroutine hintRoutine;
+    private Coroutine imageRoutine;
+
+    private GameManager gameManager;
+
     private float countdownRemaining;
     private string timerPrefix = string.Empty;
     private bool timerRunning;
 
+    private string currentPrompt;
+
     public void Initialize(GameManager manager)
     {
         gameManager = manager;
+
         CurrentTemperature = startTemperature;
+
         UpdateTemperatureUi();
+        UpdateTemperatureText();
+
         SetPrompt(string.Empty);
         SetMessage(string.Empty);
         SetTimerText(string.Empty);
 
-        if (checklistPanel != null)
-            checklistPanel.SetActive(false);
+        SetupChecklistPanel();
+
+        if (dialoguePanel != null)
+            dialoguePanel.SetActive(false);
+
+        if (imagePopupPanel != null)
+            imagePopupPanel.SetActive(false);
 
         imageMap.Clear();
 
@@ -72,9 +96,6 @@ public class UIManager : MonoBehaviour
             imageMap[entry.id] = entry.sprite;
         }
 
-        if (imagePopupPanel != null)
-            imagePopupPanel.SetActive(false);
-
         if (gameManager?.EventManager != null)
         {
             gameManager.EventManager.OnUiMessageRequested -= SetMessage;
@@ -84,9 +105,8 @@ public class UIManager : MonoBehaviour
             gameManager.EventManager.OnIncidentTimerStarted -= StartIncidentTimer;
             gameManager.EventManager.OnValveTimerStarted -= StartValveTimer;
             gameManager.EventManager.OnTimersStopped -= StopCountdown;
-
             gameManager.EventManager.OnImageRequested -= ShowImage;
-            gameManager.EventManager.OnImageRequested += ShowImage;
+
             gameManager.EventManager.OnUiMessageRequested += SetMessage;
             gameManager.EventManager.OnThoughtRequested += ShowThought;
             gameManager.EventManager.OnHintUnlocked += ShowHint;
@@ -94,25 +114,18 @@ public class UIManager : MonoBehaviour
             gameManager.EventManager.OnIncidentTimerStarted += StartIncidentTimer;
             gameManager.EventManager.OnValveTimerStarted += StartValveTimer;
             gameManager.EventManager.OnTimersStopped += StopCountdown;
+            gameManager.EventManager.OnImageRequested += ShowImage;
         }
-
     }
 
     private void Update()
     {
-        if (!timerRunning)
-            return;
+        UpdateChecklistVisibility();
 
-        countdownRemaining -= Time.deltaTime;
-        if (countdownRemaining < 0f)
-            countdownRemaining = 0f;
-
-        SetTimerText($"{timerPrefix}{countdownRemaining:0.0} c");
-
-        if (countdownRemaining <= 0f)
-            timerRunning = false;
+        if (timerRunning)
+            UpdateCountdown();
     }
-    private string currentPrompt;
+
     public void SetPrompt(string text)
     {
         if (promptText == null)
@@ -124,7 +137,7 @@ public class UIManager : MonoBehaviour
         currentPrompt = text;
         promptText.text = text;
     }
-
+    
     public void SetMessage(string text, float duration = 4f)
     {
         if (messageText == null)
@@ -139,90 +152,89 @@ public class UIManager : MonoBehaviour
             messageText.text = text;
     }
 
-    public void SetTemperature(float value)
+    private IEnumerator ShowTimedMessage(string text, float duration)
     {
-        CurrentTemperature = Mathf.Clamp(value, 0f, maxTemperature);
-        UpdateTemperatureUi();
-        UpdateTemperatureText();
-    }
-    private void UpdateTemperatureText()
-    {
-        if (temperatureValueText == null)
-            return;
+        messageText.text = text;
 
-        temperatureValueText.text = $"{CurrentTemperature:0}°C";
+        yield return new WaitForSeconds(duration);
 
-        float t = Mathf.InverseLerp(startTemperature, maxTemperature, CurrentTemperature);
-        temperatureValueText.color = temperatureTextGradient.Evaluate(t);
-    }
-
-    public void RefreshChecklist(IEnumerable<ChecklistTask> tasks)
-    {
-                if (checklistText == null)
-            return;
-
-        if (tasks == null)
-        {
-            checklistText.text = string.Empty;
-
-            if (checklistPanel != null)
-                checklistPanel.SetActive(false);
-
-            return;
-        }
-
-        var visibleTasks = tasks
-            .Where(t => t != null && t.isVisible)
-            .ToList();
-
-        bool hasVisibleTasks = visibleTasks.Count > 0;
-
-        if (checklistPanel != null)
-            checklistPanel.SetActive(hasVisibleTasks);
-
-        if (!hasVisibleTasks)
-        {
-            checklistText.text = string.Empty;
-            return;
-        }
-
-        var sb = new StringBuilder();
-
-        sb.AppendLine("<b>Задачи</b>");
-        sb.AppendLine();
-
-        foreach (var task in visibleTasks)
-        {
-            if (task.isCompleted)
-                sb.AppendLine($"<color=#888888>[v] {task.title}</color>");
-            else
-                sb.AppendLine($"<color=#FFFFFF>[x] {task.title}</color>");
-        }
-
-        checklistText.text = sb.ToString();
+        messageText.text = string.Empty;
+        messageRoutine = null;
     }
 
     public void ShowThought(string text, float duration = -1f)
     {
-        if (thoughtText == null)
+        ShowDialogueLine(" ", text, duration, true);
+    }
+
+    public void ShowDialogueLine(string speaker, string text, float duration = -1f)
+    {
+        ShowDialogueLine(speaker, text, duration, false);
+    }
+
+    private void ShowDialogueLine(string speaker, string text, float duration, bool italic)
+    {
+        if (dialoguePanel == null || dialogueText == null)
             return;
 
-        if (thoughtRoutine != null)
-            StopCoroutine(thoughtRoutine);
+        if (dialogueRoutine != null)
+            StopCoroutine(dialogueRoutine);
 
-        float finalDuration = duration > 0f ? duration : thoughtDuration;
+        float finalDuration = duration > 0f ? duration : dialogueDuration;
 
-        thoughtRoutine = StartCoroutine(
-            ShowTypedText(thoughtText, text, thoughtTypingSpeed, finalDuration)
+        dialogueRoutine = StartCoroutine(
+            ShowDialogueRoutine(speaker, text, dialogueTypingSpeed, finalDuration, italic)
         );
     }
-    private IEnumerator ShowTimedMessage(string text, float duration)
+
+    private IEnumerator ShowDialogueRoutine(
+    string speaker,
+    string text,
+    float typingSpeed,
+    float visibleDuration,
+    bool italic)
     {
-        messageText.text = text;
-        yield return new WaitForSeconds(duration);
-        messageText.text = string.Empty;
-        messageRoutine = null;
+        dialoguePanel.SetActive(true);
+
+        if (speakerText != null)
+            speakerText.text = speaker;
+
+        dialogueText.text = string.Empty;
+        dialogueText.fontStyle = italic ? FontStyles.Italic : FontStyles.Normal;
+
+        foreach (char c in text)
+        {
+            dialogueText.text += c;
+            yield return new WaitForSeconds(typingSpeed);
+        }
+
+        yield return new WaitForSeconds(visibleDuration);
+
+        dialogueText.text = string.Empty;
+        dialogueText.fontStyle = FontStyles.Normal;
+
+        if (speakerText != null)
+            speakerText.text = string.Empty;
+
+        dialoguePanel.SetActive(false);
+        dialogueRoutine = null;
     }
+
+    public void ShowHint(string text, float duration = -1f)
+    {
+        if (hintText == null)
+            return;
+
+        if (hintRoutine != null)
+            StopCoroutine(hintRoutine);
+
+        float finalDuration = duration > 0f ? duration : hintDuration;
+
+        hintRoutine = StartCoroutine(
+            ShowTypedText(hintText, text, dialogueTypingSpeed, finalDuration)
+        );
+    }
+
     private IEnumerator ShowTypedText(TMP_Text target, string text, float typingSpeed, float visibleDuration)
     {
         target.text = string.Empty;
@@ -238,19 +250,94 @@ public class UIManager : MonoBehaviour
         target.text = string.Empty;
     }
 
-    public void ShowHint(string text, float duration = -1f)
+    public void SetTemperature(float value)
     {
-        if (hintText == null)
+        CurrentTemperature = Mathf.Clamp(value, 0f, maxTemperature);
+
+        UpdateTemperatureUi();
+        UpdateTemperatureText();
+    }
+
+    private void UpdateTemperatureUi()
+    {
+        if (temperatureSlider != null)
+            temperatureSlider.value = CurrentTemperature / maxTemperature;
+    }
+
+    private void UpdateTemperatureText()
+    {
+        if (temperatureValueText == null)
             return;
 
-        if (hintRoutine != null)
-            StopCoroutine(hintRoutine);
+        temperatureValueText.text = $"{CurrentTemperature:0}°C";
 
-        float finalDuration = duration > 0f ? duration : hintDuration;
+        if (temperatureTextGradient != null)
+        {
+            float t = Mathf.InverseLerp(startTemperature, maxTemperature, CurrentTemperature);
+            temperatureValueText.color = temperatureTextGradient.Evaluate(t);
+        }
+    }
 
-        hintRoutine = StartCoroutine(
-            ShowTypedText(hintText, text, thoughtTypingSpeed, finalDuration)
-        );
+    public void RefreshChecklist(IEnumerable<ChecklistTask> tasks)
+    {
+        if (checklistText == null)
+            return;
+
+        if (tasks == null)
+        {
+            hasVisibleChecklistTasks = false;
+            checklistText.text = string.Empty;
+
+            if (checklistCanvasGroup != null)
+                checklistCanvasGroup.alpha = 0f;
+
+            if (checklistPanel != null)
+                checklistPanel.SetActive(false);
+
+            return;
+        }
+
+        var visibleTasks = tasks
+            .Where(t => t != null && t.isVisible)
+            .ToList();
+
+        bool hasVisibleTasks = visibleTasks.Count > 0;
+
+        hasVisibleChecklistTasks = hasVisibleTasks;
+
+        if (!hasVisibleTasks)
+        {
+            checklistText.text = string.Empty;
+
+            if (checklistCanvasGroup != null)
+                checklistCanvasGroup.alpha = 0f;
+
+            if (checklistPanel != null)
+                checklistPanel.SetActive(false);
+
+            return;
+        }
+
+        if (checklistPanel != null)
+            checklistPanel.SetActive(true);
+
+        var sb = new StringBuilder();
+
+        sb.AppendLine("<b><size=115%>БОРТОВОЙ ЖУРНАЛ</size></b>");
+        sb.AppendLine();
+
+        for (int i = 0; i < visibleTasks.Count; i++)
+        {
+            var task = visibleTasks[i];
+            string number = (i + 1).ToString("00");
+
+            if (task.isCompleted)
+                sb.AppendLine($"<color=#777777><s>{number}  {task.title}</s></color>");
+            else
+                sb.AppendLine($"<color=#FFFFFF>{number}  {task.title}</color>");
+        }
+
+        checklistText.text = sb.ToString();
     }
 
     public void StartIncidentTimer(float seconds)
@@ -278,17 +365,10 @@ public class UIManager : MonoBehaviour
         SetTimerText(string.Empty);
     }
 
-
     private void SetTimerText(string text)
     {
         if (timerText != null)
             timerText.text = text;
-    }
-
-    private void UpdateTemperatureUi()
-    {
-        if (temperatureSlider != null)
-            temperatureSlider.value = CurrentTemperature / maxTemperature;
     }
 
     public void ShowImage(string imageId, float duration = 4f)
@@ -310,6 +390,45 @@ public class UIManager : MonoBehaviour
 
         imageRoutine = StartCoroutine(ShowImageRoutine(sprite, duration));
     }
+    private void UpdateChecklistVisibility()
+    {
+        if (checklistPanel == null || checklistCanvasGroup == null)
+            return;
+
+        if (!hasVisibleChecklistTasks)
+        {
+            checklistCanvasGroup.alpha = 0f;
+            checklistPanel.SetActive(false);
+            return;
+        }
+
+        if (!checklistPanel.activeSelf)
+            checklistPanel.SetActive(true);
+
+        float targetAlpha = Input.GetKey(checklistHoldKey) ? 1f : 0f;
+
+        checklistCanvasGroup.alpha = Mathf.MoveTowards(
+            checklistCanvasGroup.alpha,
+            targetAlpha,
+            Time.deltaTime * checklistFadeSpeed
+        );
+
+        if (checklistCanvasGroup.alpha <= 0.001f && targetAlpha <= 0f)
+            checklistPanel.SetActive(false);
+    }
+
+    private void UpdateCountdown()
+    {
+        countdownRemaining -= Time.deltaTime;
+
+        if (countdownRemaining < 0f)
+            countdownRemaining = 0f;
+
+        SetTimerText($"{timerPrefix}{countdownRemaining:0.0} c");
+
+        if (countdownRemaining <= 0f)
+            timerRunning = false;
+    }
 
     private IEnumerator ShowImageRoutine(Sprite sprite, float duration)
     {
@@ -324,10 +443,27 @@ public class UIManager : MonoBehaviour
         popupImage.sprite = null;
         imageRoutine = null;
     }
+    private void SetupChecklistPanel()
+    {
+        if (checklistPanel == null)
+            return;
 
+        if (checklistCanvasGroup == null)
+            checklistCanvasGroup = checklistPanel.GetComponent<CanvasGroup>();
+
+        if (checklistCanvasGroup == null)
+            checklistCanvasGroup = checklistPanel.AddComponent<CanvasGroup>();
+
+        checklistCanvasGroup.alpha = 0f;
+        checklistCanvasGroup.interactable = false;
+        checklistCanvasGroup.blocksRaycasts = false;
+
+        checklistPanel.SetActive(false);
+    }
     private void OnDestroy()
     {
-        if (gameManager?.EventManager == null) return;
+        if (gameManager?.EventManager == null)
+            return;
 
         gameManager.EventManager.OnUiMessageRequested -= SetMessage;
         gameManager.EventManager.OnThoughtRequested -= ShowThought;
@@ -338,6 +474,7 @@ public class UIManager : MonoBehaviour
         gameManager.EventManager.OnTimersStopped -= StopCountdown;
         gameManager.EventManager.OnImageRequested -= ShowImage;
     }
+
     [Serializable]
     public class UiImageEntry
     {

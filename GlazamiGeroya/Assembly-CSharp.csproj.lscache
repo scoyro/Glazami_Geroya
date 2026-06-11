@@ -53,6 +53,7 @@ TemporaryDependencyNodeTargetIdentifier=netstandard2.1
 Assets/
  TutorialInfo/Scripts/Readme.cs
  _GlazamiGeroya/Scripts/Audio/
+  AudioDucker.cs
   FootSteps.cs
   RandomSounds.cs
   SoundEmitter.cs
@@ -65,10 +66,12 @@ Assets/
  _GlazamiGeroya/Scripts/
   JOURNAL_UI&Scripts/Scripts/TakeJournal.cs
   Player/
+   MovementBlock.cs
    PlayerMovemen.cs
    ProcefuralAnimation.cs
    TeleportTrigger.cs
   Systems/
+   ACT2.cs
    AudioManager.cs
    ChecklistManager.cs
    ChoiceSystem.cs
@@ -89,6 +92,7 @@ Assets/
    KentJournal.cs
    LadderState.cs
    LadderZone.cs
+   RoomThought.cs
    TempDebug.cs
    TemperatureVFXController.cs
    TemperatureZone.cs
