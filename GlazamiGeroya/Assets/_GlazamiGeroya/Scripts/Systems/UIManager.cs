@@ -137,7 +137,7 @@ public class UIManager : MonoBehaviour
         currentPrompt = text;
         promptText.text = text;
     }
-
+    
     public void SetMessage(string text, float duration = 4f)
     {
         if (messageText == null)

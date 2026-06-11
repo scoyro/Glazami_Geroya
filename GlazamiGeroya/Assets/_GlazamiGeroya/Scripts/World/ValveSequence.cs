@@ -8,6 +8,9 @@ public class ValveFinalSequenceController : MonoBehaviour
     [SerializeField] private ValveCutsceneController valveCutsceneController;
     [SerializeField] private ValveCameraEffectsController cameraEffects;
 
+    [Header("Canonical Ending")]
+    [SerializeField] private CanonicalValveEndingController canonicalEndingController;
+
     [Header("Valve")]
     [SerializeField] private Transform valveWheel;
 
@@ -43,6 +46,12 @@ public class ValveFinalSequenceController : MonoBehaviour
     [SerializeField] private AudioClip successClip;
     [SerializeField] private AudioClip failClip;
 
+    [Header("Valve Breathing")]
+    [SerializeField] private AudioSource valveBreathingAudioSource;
+    [SerializeField] private AudioClip valveBreathingClip;
+    [SerializeField] private bool stopBreathingOnSuccess = false;
+    [SerializeField] private bool stopBreathingOnFail = true;
+
     [Header("Success Moment")]
     [SerializeField] private float delayBeforeSuccessEvent = 1.5f;
     [SerializeField] private AudioSource fuelAudioSource;
@@ -53,6 +62,20 @@ public class ValveFinalSequenceController : MonoBehaviour
     [Header("Events")]
     [SerializeField] private UnityEvent onSuccess;
     [SerializeField] private UnityEvent onFail;
+
+    [Header("Fail Cinematic")]
+    [SerializeField] private Transform failNodTarget;
+    [SerializeField] private Transform failFallTarget;
+    [SerializeField] private ZoneOutVolumeEffect deathZoneOut;
+    [SerializeField] private float failNodDownDuration = 0.45f;
+    [SerializeField] private float failNodRecoverDuration = 0.35f;
+    [SerializeField] private float failFallDuration = 0.9f;
+    [SerializeField] private float failFadeOutDuration = 0.7f;
+    [SerializeField] private float delayAfterFailFade = 0.3f;
+
+    [Header("Ending")]
+    [SerializeField] private EndingController endingController;
+    [SerializeField] private string failEndingId = "escape_without_valve";
 
     private bool isRunning;
     private bool valveClosed;
@@ -110,6 +133,8 @@ public class ValveFinalSequenceController : MonoBehaviour
 
         if (uiManager != null)
             uiManager.SetMessage(startPrompt);
+
+        PlayValveBreathing();
 
         yield return ValveInputRoutine();
 
@@ -217,6 +242,29 @@ public class ValveFinalSequenceController : MonoBehaviour
         valveWheel.localRotation = valveStartRotation * rotationOffset;
     }
 
+    private void PlayValveBreathing()
+    {
+        if (valveBreathingAudioSource == null)
+            return;
+
+        if (valveBreathingClip != null)
+            valveBreathingAudioSource.clip = valveBreathingClip;
+
+        valveBreathingAudioSource.loop = false;
+        valveBreathingAudioSource.pitch = 1f;
+
+        valveBreathingAudioSource.Stop();
+        valveBreathingAudioSource.Play();
+    }
+
+    private void StopValveBreathing()
+    {
+        if (valveBreathingAudioSource == null)
+            return;
+
+        valveBreathingAudioSource.Stop();
+    }
+
     private void SetValveHeat(float pressure)
     {
         if (valveHeatSource == null)
@@ -239,34 +287,78 @@ public class ValveFinalSequenceController : MonoBehaviour
 
     private IEnumerator SuccessRoutine()
     {
+        isRunning = false;
+
         ResetValveHeat();
+
+        if (stopBreathingOnSuccess)
+            StopValveBreathing();
 
         if (successClip != null && valveAudioSource != null)
             valveAudioSource.PlayOneShot(successClip);
 
         if (uiManager != null)
-            uiManager.SetMessage(successMessage, 3f);
+            uiManager.SetMessage(successMessage, 2f);
 
         if (firePressureController != null)
             firePressureController.FadeDownAfterSuccess(successFireFadeDuration);
 
         yield return FadeOutAudioSources();
 
-        yield return new WaitForSeconds(delayBeforeSuccessEvent);
+        if (cameraEffects != null)
+            cameraEffects.SetStress(0.25f);
 
         onSuccess?.Invoke();
+
+        if (canonicalEndingController != null)
+            canonicalEndingController.StartEnding();
     }
 
     private void FinishFail()
     {
+        if (!isRunning)
+            return;
+
+        StartCoroutine(FailRoutine());
+    }
+
+    private IEnumerator FailRoutine()
+    {
+        isRunning = false;
 
         if (failClip != null && valveAudioSource != null)
             valveAudioSource.PlayOneShot(failClip);
 
         if (uiManager != null)
-            uiManager.SetMessage(failMessage, 3f);
+            uiManager.SetMessage(failMessage, 2f);
+
+        if (cameraEffects != null)
+            cameraEffects.SetStress(1f);
+
+        if (valveCutsceneController != null)
+        {
+            yield return valveCutsceneController.DeathFallRoutine(
+                failNodTarget,
+                failFallTarget,
+                failNodDownDuration,
+                failNodRecoverDuration,
+                failFallDuration,
+                deathZoneOut,
+                failFadeOutDuration
+            );
+        }
+
+        if (stopBreathingOnFail)
+            StopValveBreathing();
+
+        yield return new WaitForSeconds(delayAfterFailFade);
+
+        ResetValveHeat();
 
         onFail?.Invoke();
+
+        if (endingController != null)
+            endingController.PlayEnding(failEndingId);
     }
 
     private IEnumerator FadeOutAudioSources()

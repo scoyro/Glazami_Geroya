@@ -35,11 +35,10 @@ public class GameManager : MonoBehaviour
     public TemperatureManager TemperatureManager => temperatureManager;
     public TemperatureVFXController TemperatureVFXController => temperatureVFXController;
 
-    public static event Action<GameManager> OnGameManagerReady;
+
 
     private void Awake()
     {
-        Debug.Log($"GameManager Awake called on {gameObject.name}, Instance={(Instance == null ? "null" : Instance.gameObject.name)}, scene={gameObject.scene.name}");
 
         if (Instance != null && Instance != this)
         {
@@ -90,6 +89,5 @@ public class GameManager : MonoBehaviour
         temperatureManager?.Initialize(this);
         temperatureVFXController?.Initialize(this);
 
-        OnGameManagerReady?.Invoke(this);
     }
 }

@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class EndingController : MonoBehaviour
 {
@@ -45,6 +47,15 @@ public class EndingController : MonoBehaviour
     [Header("Behaviour")]
     [SerializeField] private bool forceUnpauseDuringEnding = true;
     [SerializeField] private bool pauseGameAfterText = true;
+    [Header("Cursor")]
+    [SerializeField] private bool unlockCursorDuringEnding = true;
+    [SerializeField] private bool keepCursorUnlockedWhileEnding = true;
+
+    [Header("Description Scroll")]
+    [SerializeField] private ScrollRect descriptionScrollRect;
+    [SerializeField] private bool autoScrollDescription = true;
+    [SerializeField] private float autoScrollSpeed = 4f;
+    [SerializeField] private bool snapScrollToTopOnStart = true;
 
     private readonly Dictionary<string, EndingData> endingMap = new Dictionary<string, EndingData>();
 
@@ -53,6 +64,7 @@ public class EndingController : MonoBehaviour
 
     private bool isPlaying;
     private bool skipRequested;
+    private bool isTypingDescription;
 
     public bool IsPlaying => isPlaying;
 
@@ -71,6 +83,9 @@ public class EndingController : MonoBehaviour
 
     private void Update()
     {
+        if (isTypingDescription)
+            AutoScrollDescription();
+
         if (!isPlaying)
             return;
 
@@ -80,7 +95,17 @@ public class EndingController : MonoBehaviour
         if (Input.GetKeyDown(skipTypingKey) || Input.GetMouseButtonDown(0))
             skipRequested = true;
     }
+    private void LateUpdate()
+    {
+        if (!isPlaying)
+            return;
 
+        if (!keepCursorUnlockedWhileEnding)
+            return;
+
+        if (endingPanel != null && endingPanel.activeInHierarchy)
+            UnlockCursorForEnding();
+    }
     public void PlayEnding(string endingId)
     {
         if (isPlaying)
@@ -105,11 +130,13 @@ public class EndingController : MonoBehaviour
     {
         isPlaying = true;
         skipRequested = false;
+        isTypingDescription = false;
 
         if (forceUnpauseDuringEnding)
             Time.timeScale = 1f;
 
         LockPlayer();
+        UnlockCursorForEnding();
         StopRequestedAudio();
 
         if (buttonsRoot != null)
@@ -123,6 +150,8 @@ public class EndingController : MonoBehaviour
             descriptionText.text = string.Empty;
             descriptionText.maxVisibleCharacters = int.MaxValue;
         }
+
+        ResetDescriptionScroll();
 
         if (ending.fadeOutBeforeShow && ScreenFader.Instance != null)
         {
@@ -146,6 +175,7 @@ public class EndingController : MonoBehaviour
             else
                 ShowDescriptionInstant(ending.description);
         }
+        UnlockCursorForEnding();
 
         if (buttonsRoot != null)
             buttonsRoot.SetActive(true);
@@ -155,12 +185,20 @@ public class EndingController : MonoBehaviour
 
         endingRoutine = null;
     }
+    private void UnlockCursorForEnding()
+    {
+        if (!unlockCursorDuringEnding)
+            return;
 
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
     private void ShowPanelBase(EndingData ending)
     {
         if (endingPanel != null)
             endingPanel.SetActive(true);
-
+            
+        UnlockCursorForEnding();
         if (resultText != null)
             resultText.text = GetResultLabel(ending.result);
 
@@ -172,6 +210,8 @@ public class EndingController : MonoBehaviour
             descriptionText.text = string.Empty;
             descriptionText.maxVisibleCharacters = int.MaxValue;
         }
+
+        ResetDescriptionScroll();
     }
 
     private IEnumerator TypeDescription(string text)
@@ -179,30 +219,34 @@ public class EndingController : MonoBehaviour
         if (descriptionText == null)
             yield break;
 
-        if (string.IsNullOrEmpty(text))
-        {
-            descriptionText.text = string.Empty;
-            yield break;
-        }
+        descriptionText.text = string.Empty;
+        descriptionText.maxVisibleCharacters = int.MaxValue;
 
-        descriptionText.text = text;
-        descriptionText.maxVisibleCharacters = 0;
+        ResetDescriptionScroll();
+
+        if (string.IsNullOrEmpty(text))
+            yield break;
 
         float delay = charactersPerSecond > 0f
             ? 1f / charactersPerSecond
             : 0f;
 
-        int totalCharacters = text.Length;
+        StringBuilder builder = new StringBuilder(text.Length);
 
-        for (int i = 0; i <= totalCharacters; i++)
+        isTypingDescription = true;
+
+        for (int i = 0; i < text.Length; i++)
         {
             if (skipRequested)
             {
-                descriptionText.maxVisibleCharacters = int.MaxValue;
+                descriptionText.text = text;
+                isTypingDescription = false;
+                ForceScrollToBottom();
                 yield break;
             }
 
-            descriptionText.maxVisibleCharacters = i;
+            builder.Append(text[i]);
+            descriptionText.text = builder.ToString();
 
             if (delay > 0f)
                 yield return new WaitForSecondsRealtime(delay);
@@ -210,7 +254,10 @@ public class EndingController : MonoBehaviour
                 yield return null;
         }
 
-        descriptionText.maxVisibleCharacters = int.MaxValue;
+        isTypingDescription = false;
+
+        descriptionText.text = text;
+        ForceScrollToBottom();
     }
 
     private void ShowDescriptionInstant(string text)
@@ -220,6 +267,48 @@ public class EndingController : MonoBehaviour
 
         descriptionText.text = text;
         descriptionText.maxVisibleCharacters = int.MaxValue;
+
+        ResetDescriptionScroll();
+    }
+
+    private void ResetDescriptionScroll()
+    {
+        if (descriptionScrollRect == null)
+            return;
+
+        Canvas.ForceUpdateCanvases();
+
+        if (snapScrollToTopOnStart)
+            descriptionScrollRect.verticalNormalizedPosition = 1f;
+    }
+
+    private void AutoScrollDescription()
+    {
+        if (!autoScrollDescription)
+            return;
+
+        if (descriptionScrollRect == null)
+            return;
+
+        Canvas.ForceUpdateCanvases();
+
+        descriptionScrollRect.verticalNormalizedPosition = Mathf.Lerp(
+            descriptionScrollRect.verticalNormalizedPosition,
+            0f,
+            Time.unscaledDeltaTime * autoScrollSpeed
+        );
+    }
+
+    private void ForceScrollToBottom()
+    {
+        if (!autoScrollDescription)
+            return;
+
+        if (descriptionScrollRect == null)
+            return;
+
+        Canvas.ForceUpdateCanvases();
+        descriptionScrollRect.verticalNormalizedPosition = 0f;
     }
 
     private EndingData GetEnding(string endingId)
@@ -345,6 +434,8 @@ public class EndingController : MonoBehaviour
             descriptionText.text = string.Empty;
             descriptionText.maxVisibleCharacters = int.MaxValue;
         }
+
+        ResetDescriptionScroll();
     }
 
     public void RestartGame()
