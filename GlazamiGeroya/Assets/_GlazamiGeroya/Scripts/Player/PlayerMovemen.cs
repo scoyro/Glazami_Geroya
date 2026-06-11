@@ -99,6 +99,8 @@ public class PlayerController : MonoBehaviour
             defaultCameraLocalPosition = cameraTransform.localPosition;
             defaultCameraLocalRotation = cameraTransform.localRotation;
             defaultYPos = cameraTransform.localPosition.y;
+
+        SyncLookRotationFromCamera();
         }
         cinematicBaseCameraLocalPosition = defaultCameraLocalPosition;
         cinematicBaseCameraLocalRotation = defaultCameraLocalRotation;
@@ -226,11 +228,15 @@ private void ApplyGravityOnly()
 
     public void UnlockControls()
     {
+        SyncLookRotationFromCamera();
         controlsLocked = false;
     }
 
     public void SetCameraExternallyControlled(bool value)
     {
+        if (!value)
+            SyncLookRotationFromCamera();
+
         cameraExternallyControlled = value;
 
         if (value)
@@ -241,6 +247,33 @@ private void ApplyGravityOnly()
         }
     }
 
+    public void SyncLookRotationFromCamera()
+    {
+        if (cameraTransform == null)
+            return;
+
+        float currentPitch = NormalizeAngle(cameraTransform.localEulerAngles.x);
+        xRotation = Mathf.Clamp(currentPitch, minY, maxY);
+        cameraTransform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+    }
+
+    public void SetExternalLookRotation(Quaternion playerRotation, float cameraPitch)
+    {
+        transform.rotation = playerRotation;
+
+        xRotation = Mathf.Clamp(cameraPitch, minY, maxY);
+
+        if (cameraTransform != null)
+            cameraTransform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+    }
+
+    private float NormalizeAngle(float angle)
+    {
+        if (angle > 180f)
+            angle -= 360f;
+
+        return angle;
+    }
     public void StartCinematicWalk(Transform target, float walkSpeed, bool requireW)
     {
         if (target == null)
