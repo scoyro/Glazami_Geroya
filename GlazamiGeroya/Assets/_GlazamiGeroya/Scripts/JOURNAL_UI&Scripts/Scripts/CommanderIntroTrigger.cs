@@ -54,6 +54,8 @@ public class CommanderIntroTrigger : MonoBehaviour
     [SerializeField] private string firstTaskId = "take_journal";
     [SerializeField] private bool showFirstTaskAfterIntro = true;
 
+    [Header("Highlight")]
+    [SerializeField] private EmissionPulseHighlight journalHighlight;
     [Header("Events")]
     [SerializeField] private UnityEvent onIntroStarted;
     [SerializeField] private UnityEvent onIntroFinished;
@@ -164,8 +166,9 @@ public class CommanderIntroTrigger : MonoBehaviour
         if (journalDirectionTarget != null)
             yield return FaceDirectionTargetRoutine(journalDirectionTarget, lookToJournalDuration);
 
-        if (showFirstTaskAfterIntro && !string.IsNullOrWhiteSpace(firstTaskId))
-            GameManager.Instance?.ChecklistManager?.SetTaskVisible(firstTaskId, true);
+
+        if (journalHighlight != null)
+            journalHighlight.EnableHighlight();
 
         playerController.SyncLookRotationFromCamera();
 
