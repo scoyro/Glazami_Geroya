@@ -22,6 +22,15 @@ public class FireSuppressionLeverController : MonoBehaviour
     [SerializeField] private InteractionTarget interactionTarget;
     [SerializeField] private Collider interactionCollider;
     [SerializeField] private bool disableAfterUse = true;
+    
+    [Header("Not Ready Look")]
+    [SerializeField] private PlayerController playerController;
+    [SerializeField] private PlayerControlLock playerControlLock;
+    [SerializeField] private Transform notReadyLookTarget;
+    [SerializeField] private float lookTransitionDuration = 0.8f;
+    [SerializeField] private float lookHoldDuration = 1.0f;
+
+    private bool isLooking; // Флаг, чтобы игрок не спамил рычаг во время поворота камеры
 
     [Header("Audio")]
     [SerializeField] private AudioClip leverTurnClip;
@@ -62,18 +71,92 @@ public class FireSuppressionLeverController : MonoBehaviour
 
     public void TryActivate()
     {
-        if (isStarted || isRotating || isWorking)
+        // Добавлена проверка isLooking
+        if (isStarted || isRotating || isWorking || isLooking)
             return;
 
         if (requirePanelCompleted && (panelProcedureController == null || !panelProcedureController.ProcedureCompleted))
         {
-            RequestThought(notReadyThought, 4f);
+            // Если цель задана, запускаем корутину осмотра
+            if (notReadyLookTarget != null && playerController != null)
+            {
+                StartCoroutine(NotReadyLookRoutine());
+            }
+            else
+            {
+                RequestThought(notReadyThought, 4f);
+            }
             return;
         }
 
         StartCoroutine(ActivateRoutine());
     }
 
+    private IEnumerator NotReadyLookRoutine()
+    {
+        isLooking = true;
+
+        // Блокируем управление игрока
+        if (playerControlLock != null) 
+            playerControlLock.LockControls();
+            
+        playerController.SetCameraExternallyControlled(true);
+
+        // Показываем мысль
+        RequestThought(notReadyThought, 4f);
+
+        Transform camTransform = playerController.cameraTransform;
+        
+        // 1. Вычисляем направление к объекту
+        Vector3 directionToTarget = notReadyLookTarget.position - camTransform.position;
+        
+        // 2. Считаем поворот для тела игрока (только по оси Y)
+        Vector3 bodyDirection = directionToTarget;
+        bodyDirection.y = 0f;
+        Quaternion startPlayerRot = playerController.transform.rotation;
+        Quaternion targetPlayerRot = Quaternion.LookRotation(bodyDirection.normalized);
+
+        // 3. Считаем наклон камеры (Pitch, по оси X)
+        float distance2D = bodyDirection.magnitude;
+        float targetPitch = -Mathf.Atan2(directionToTarget.y, distance2D) * Mathf.Rad2Deg;
+        
+        // Нормализуем текущий pitch камеры
+        float startPitch = camTransform.localEulerAngles.x;
+        if (startPitch > 180f) startPitch -= 360f;
+
+        float time = 0f;
+
+        // 4. Плавно поворачиваем
+        while (time < lookTransitionDuration)
+        {
+            time += Time.deltaTime;
+            float t = Mathf.Clamp01(time / lookTransitionDuration);
+            t = Smooth(t); // Используем ваш метод Smooth для плавности
+
+            Quaternion currentBodyRot = Quaternion.Slerp(startPlayerRot, targetPlayerRot, t);
+            float currentPitch = Mathf.Lerp(startPitch, targetPitch, t);
+
+            // Используем встроенный метод вашего контроллера
+            playerController.SetExternalLookRotation(currentBodyRot, currentPitch);
+
+            yield return null;
+        }
+
+        // Фиксируем конечную позицию
+        playerController.SetExternalLookRotation(targetPlayerRot, targetPitch);
+
+        // 5. Ждем, пока игрок посмотрит на объект
+        yield return new WaitForSeconds(lookHoldDuration);
+
+        // 6. Возвращаем управление
+        playerController.SyncLookRotationFromCamera(); // Обязательно, чтобы камера не "дернулась" обратно
+        playerController.SetCameraExternallyControlled(false);
+        
+        if (playerControlLock != null) 
+            playerControlLock.UnlockControls();
+
+        isLooking = false;
+    }
     private IEnumerator ActivateRoutine()
     {
         isRotating = true;

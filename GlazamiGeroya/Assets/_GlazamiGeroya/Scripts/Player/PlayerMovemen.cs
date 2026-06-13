@@ -64,7 +64,8 @@ public class PlayerController : MonoBehaviour
     private bool cameraExternallyControlled;
 
     private bool cinematicWalkMode;
-    private Transform cinematicWalkTarget;
+    private Transform[] cinematicWalkTargets;
+    private int currentWaypointIndex;
     private float cinematicWalkSpeed = 1f;
     private bool cinematicRequireW = true;
     private bool cinematicReachedTarget;
@@ -274,19 +275,19 @@ private void ApplyGravityOnly()
 
         return angle;
     }
-    public void StartCinematicWalk(Transform target, float walkSpeed, bool requireW)
+    public void StartCinematicWalk(Transform[] targets, float walkSpeed, bool requireW)
     {
-        if (target == null)
+        if (targets == null || targets.Length == 0)
             return;
 
         cinematicWalkMode = true;
-        cinematicWalkTarget = target;
+        cinematicWalkTargets = targets;
+        currentWaypointIndex = 0; // Начинаем с первой точки
         cinematicWalkSpeed = Mathf.Max(0f, walkSpeed);
         cinematicRequireW = requireW;
         cinematicReachedTarget = false;
 
         suppressNormalHeadBob = true;
-
         controlsLocked = false;
         cameraExternallyControlled = false;
 
@@ -296,10 +297,6 @@ private void ApplyGravityOnly()
 
         if (cameraTransform != null)
         {
-            // ВАЖНО:
-            // Берём текущий поворот камеры как базовый.
-            // То есть если камера уже посмотрела на дверь,
-            // хромающий bob будет накладываться поверх этого взгляда.
             cinematicBaseCameraLocalPosition = cameraTransform.localPosition;
             cinematicBaseCameraLocalRotation = cameraTransform.localRotation;
         }
@@ -307,10 +304,11 @@ private void ApplyGravityOnly()
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
+
     public void StopCinematicWalk()
     {
         cinematicWalkMode = false;
-        cinematicWalkTarget = null;
+        cinematicWalkTargets = null;
         cinematicReachedTarget = false;
 
         moveX = 0f;
@@ -403,16 +401,24 @@ private void ApplyGravityOnly()
 
         Vector3 horizontalMove = Vector3.zero;
 
-        if (cinematicWalkTarget != null)
+        if (cinematicWalkTargets != null && currentWaypointIndex < cinematicWalkTargets.Length)
         {
-            Vector3 toTarget = cinematicWalkTarget.position - transform.position;
+            Transform currentTarget = cinematicWalkTargets[currentWaypointIndex];
+            Vector3 toTarget = currentTarget.position - transform.position;
             toTarget.y = 0f;
 
             float distance = toTarget.magnitude;
 
             if (distance <= cinematicStopDistance)
             {
-                cinematicReachedTarget = true;
+                // Переключаемся на следующую точку
+                currentWaypointIndex++;
+                
+                // Если точки закончились, мы у цели
+                if (currentWaypointIndex >= cinematicWalkTargets.Length)
+                {
+                    cinematicReachedTarget = true;
+                }
             }
             else
             {

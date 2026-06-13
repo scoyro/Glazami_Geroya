@@ -50,6 +50,7 @@ public class CanonicalValveEndingController : MonoBehaviour
 
     [Header("Walk")]
     [SerializeField] private Transform doorWalkTarget;
+    [SerializeField] private Transform[] walkWaypoints;
     [SerializeField] private float woundedWalkSpeed = 0.65f;
     [SerializeField] private float maxWalkDuration = 18f;
 
@@ -203,6 +204,8 @@ public class CanonicalValveEndingController : MonoBehaviour
         // руки выключаются до прикрепления камеры обратно.
         HideBurnedHands();
 
+        Transform[] path = GetCompleteWalkPath();
+
         // Прикрепляем камеру обратно к телу.
         if (valveCutsceneController != null)
             valveCutsceneController.AttachCameraBackToPlayerKeepWorldPose();
@@ -213,7 +216,7 @@ public class CanonicalValveEndingController : MonoBehaviour
         if (playerController != null)
         {
             playerController.SetCameraExternallyControlled(false);
-            playerController.StartCinematicWalk(doorWalkTarget, woundedWalkSpeed, true);
+            playerController.StartCinematicWalk(path, woundedWalkSpeed, true);
         }
 
         StartWalkAmbientMixer();
@@ -255,6 +258,22 @@ public class CanonicalValveEndingController : MonoBehaviour
 
         isRunning = false;
         routine = null;
+    }   
+    private Transform[] GetCompleteWalkPath()
+    {
+        if (walkWaypoints == null || walkWaypoints.Length == 0)
+        {
+            return new Transform[] { doorWalkTarget };
+        }
+
+        Transform[] completePath = new Transform[walkWaypoints.Length + 1];
+        for (int i = 0; i < walkWaypoints.Length; i++)
+        {
+            completePath[i] = walkWaypoints[i];
+        }
+        completePath[completePath.Length - 1] = doorWalkTarget;
+        
+        return completePath;
     }
 
     private IEnumerator WaitUntilDoorReached()
@@ -338,7 +357,8 @@ public class CanonicalValveEndingController : MonoBehaviour
         // Возобновляем медленную ходьбу.
         if (playerController != null && doorWalkTarget != null)
         {
-            playerController.StartCinematicWalk(doorWalkTarget, woundedWalkSpeed, true);
+            Transform[] path = GetCompleteWalkPath();
+            playerController.StartCinematicWalk(path, woundedWalkSpeed, true);
             playerControlLock?.UnlockControls();
         }
     }

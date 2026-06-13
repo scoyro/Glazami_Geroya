@@ -33,7 +33,7 @@ public class TemperatureManager : MonoBehaviour
         }
     }
     
-
+    private float lastBroadcastedTemperature = -999f;
     private void Update()
     {
         if (activeProfile == null)
@@ -44,7 +44,11 @@ public class TemperatureManager : MonoBehaviour
 
         UpdateTemperatureTransition();
 
-        gameManager?.EventManager?.RaiseTemperatureChanged(currentTemperature);
+        if (Mathf.Abs(currentTemperature - lastBroadcastedTemperature) > 0.001f)
+        {
+            lastBroadcastedTemperature = currentTemperature;
+            gameManager?.EventManager?.RaiseTemperatureChanged(currentTemperature);
+        }
     }
 
     public void EnterZone(TemperatureZone zone)
