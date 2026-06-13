@@ -46,6 +46,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private KeyCode checklistHoldKey = KeyCode.Tab;
     [SerializeField] private float checklistFadeSpeed = 8f;
     [SerializeField] private CanvasGroup checklistCanvasGroup;
+    private int lastDisplayedTemperature = -999;
 
     private bool hasVisibleChecklistTasks;
     public float CurrentTemperature { get; private set; }
@@ -199,17 +200,22 @@ public class UIManager : MonoBehaviour
         if (speakerText != null)
             speakerText.text = speaker;
 
-        dialogueText.text = string.Empty;
+        // ОПТИМИЗАЦИЯ: Назначаем текст один раз, обнуляем видимость
+        dialogueText.text = text;
+        dialogueText.maxVisibleCharacters = 0;
         dialogueText.fontStyle = italic ? FontStyles.Italic : FontStyles.Normal;
 
-        foreach (char c in text)
+        // Плавно увеличиваем счетчик видимых символов
+        for (int i = 0; i <= text.Length; i++)
         {
-            dialogueText.text += c;
+            dialogueText.maxVisibleCharacters = i;
             yield return new WaitForSeconds(typingSpeed);
         }
 
         yield return new WaitForSeconds(visibleDuration);
 
+        // Возвращаем все в исходное состояние
+        dialogueText.maxVisibleCharacters = int.MaxValue;
         dialogueText.text = string.Empty;
         dialogueText.fontStyle = FontStyles.Normal;
 
@@ -220,6 +226,23 @@ public class UIManager : MonoBehaviour
         dialogueRoutine = null;
     }
 
+    private IEnumerator ShowTypedText(TMP_Text target, string text, float typingSpeed, float visibleDuration)
+    {
+        // ОПТИМИЗАЦИЯ
+        target.text = text;
+        target.maxVisibleCharacters = 0;
+
+        for (int i = 0; i <= text.Length; i++)
+        {
+            target.maxVisibleCharacters = i;
+            yield return new WaitForSeconds(typingSpeed);
+        }
+
+        yield return new WaitForSeconds(visibleDuration);
+
+        target.maxVisibleCharacters = int.MaxValue;
+        target.text = string.Empty;
+    }
     public void ShowHint(string text, float duration = -1f)
     {
         if (hintText == null)
@@ -235,20 +258,6 @@ public class UIManager : MonoBehaviour
         );
     }
 
-    private IEnumerator ShowTypedText(TMP_Text target, string text, float typingSpeed, float visibleDuration)
-    {
-        target.text = string.Empty;
-
-        foreach (char c in text)
-        {
-            target.text += c;
-            yield return new WaitForSeconds(typingSpeed);
-        }
-
-        yield return new WaitForSeconds(visibleDuration);
-
-        target.text = string.Empty;
-    }
 
     public void SetTemperature(float value)
     {
@@ -269,7 +278,14 @@ public class UIManager : MonoBehaviour
         if (temperatureValueText == null)
             return;
 
-        temperatureValueText.text = $"{CurrentTemperature:0}°C";
+        int currentIntTemp = Mathf.RoundToInt(CurrentTemperature);
+
+        // ОПТИМИЗАЦИЯ: Склеиваем строку только если изменился ЦЕЛЫЙ градус
+        if (currentIntTemp != lastDisplayedTemperature)
+        {
+            lastDisplayedTemperature = currentIntTemp;
+            temperatureValueText.text = $"{currentIntTemp}°C";
+        }
 
         if (temperatureTextGradient != null)
         {
