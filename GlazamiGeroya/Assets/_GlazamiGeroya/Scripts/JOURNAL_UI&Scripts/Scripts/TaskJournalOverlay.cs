@@ -36,7 +36,7 @@ public class TaskJournalOverlay : MonoBehaviour
     [SerializeField] private float dimTargetAlpha = 0.55f;
 
     [Header("Text")]
-    [SerializeField] private string title = "БОРТОВОЙ ЖУРНАЛ";
+    [SerializeField] private string title = "Список задач";
     [SerializeField] private Color activeTaskColor = Color.white;
     [SerializeField] private Color completedTaskColor = new Color(0.5f, 0.5f, 0.5f);
     [SerializeField] private Color lockedTaskColor = new Color(0.35f, 0.35f, 0.35f);
