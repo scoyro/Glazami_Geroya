@@ -437,15 +437,13 @@ public class EndingController : MonoBehaviour
 
     public void RestartGame()
     {
+        // Восстанавливаем время, если игра была поставлена на паузу (Time.timeScale = 0)
+        // Это самая частая причина "неработающего" перезапуска
         Time.timeScale = 1f;
 
-        if (gameManager != null && gameManager.SceneController != null)
-        {
-            gameManager.SceneController.ReloadCurrentScene();
-            return;
-        }
-
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        // Получаем индекс текущей активной сцены и загружаем её заново
+        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
+        SceneManager.LoadScene(currentSceneIndex);
     }
 
     public void ReturnToMenu()
