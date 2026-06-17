@@ -47,6 +47,12 @@ public class TrainingValveWheelController : MonoBehaviour
     [SerializeField] private bool lockInteractionWhileControlling = true;
     [SerializeField] private bool lockPlayerWhileControlling = true;
     [SerializeField] private PlayerControlLock playerControlLock;
+    [Header("Release Constraints")]
+    [Tooltip("Если включено, игрок не сможет нажать Esc раньше времени")]
+    [SerializeField] private bool preventEarlyRelease = true;
+    
+    [Tooltip("Минимальный процент (от 0 до 1) для выхода. 0.8 = 80%")]
+    [SerializeField, Range(0f, 1f)] private float requiredReleasePercent = 0.8f;
 
     [Header("Task")]
     [SerializeField] private CompletionMode completionMode = CompletionMode.CloseThenOpen;
@@ -85,10 +91,16 @@ public class TrainingValveWheelController : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float openFlowVolume = 0.75f;
     [SerializeField] private bool startFlowAudioIfNeeded = true;
 
+    [Header("Turning Audio (Continuous)")]
+    [Tooltip("Массив звуков скрипа/трения в процессе вращения")]
+    [SerializeField] private AudioClip[] turningClips;
+    
+    [Tooltip("Отдельный AudioSource на вентиле (поставь ему галочку Loop)")]
+    [SerializeField] private AudioSource turningAudioSource;
     [Header("One Shot Audio Optional")]
-    [SerializeField] private AudioClip fullyClosedClip;
-    [SerializeField] private AudioClip fullyOpenClip;
-    [SerializeField] private AudioClip completedClip;
+    [SerializeField] private AudioClip[] fullyClosedClips;
+    [SerializeField] private AudioClip[] fullyOpenClips;
+    [SerializeField] private AudioClip[] completedClips;
     [SerializeField] private AudioSource oneShotAudioSource;
 
     [Header("Events")]
@@ -119,6 +131,19 @@ public class TrainingValveWheelController : MonoBehaviour
 
         baseLocalRotation = wheelVisual.localRotation;
         openAmount = Mathf.Clamp01(startOpenAmount);
+
+        // ТИХАЯ ИНИЦИАЛИЗАЦИЯ: сразу помечаем состояние, чтобы не было ложных срабатываний
+        if (IsFullyClosed)
+        {
+            reachedClosedDuringCheck = true;
+            closedFeedbackShown = true;
+        }
+        else if (IsFullyOpen)
+        {
+            reachedOpenDuringCheck = true;
+            openFeedbackShown = true;
+        }
+
         ApplyRotation();
         UpdateFuelFlowAudio(true);
     }
@@ -128,12 +153,22 @@ public class TrainingValveWheelController : MonoBehaviour
         if (!isControlling)
             return;
 
+        // --- ПРОВЕРКА ВЫХОДА (ESC) ---
         if (Input.GetKeyDown(releaseKey))
         {
+            // Проверяем, включен ли запрет и достиг ли вентиль нужного процента
+            if (preventEarlyRelease && openAmount < requiredReleasePercent)
+            {
+                int neededPercent = Mathf.RoundToInt(requiredReleasePercent * 100f);
+                GameManager.Instance?.UIManager?.SetMessage($"Нельзя прекращать подачу! Докрутите вентиль!%", 4f);
+                return; // Прерываем выход, игрок остается привязан к вентилю
+            }
+
             EndControl();
             return;
         }
 
+        // --- ЛОГИКА ВРАЩЕНИЯ ---
         float direction = 0f;
 
         if (Input.GetKey(closeKey))
@@ -144,15 +179,54 @@ public class TrainingValveWheelController : MonoBehaviour
 
         if (Mathf.Abs(direction) > 0.01f)
         {
+            float previousAmount = openAmount;
             openAmount = Mathf.Clamp01(openAmount + direction * rotateSpeed * Time.deltaTime);
-            ApplyRotation();
-            UpdateFuelFlowAudio(false);
-            CheckEndStates(true);
+
+            bool actuallyMoved = Mathf.Abs(openAmount - previousAmount) > 0.0001f;
+
+            if (actuallyMoved)
+            {
+                ApplyRotation();
+                UpdateFuelFlowAudio(false);
+                CheckEndStates(true);
+                
+                PlayTurningAudio();
+            }
+            else
+            {
+                StopTurningAudio();
+            }
+        }
+        else
+        {
+            StopTurningAudio();
         }
 
         UpdateControlPrompt();
     }
+        private void PlayTurningAudio()
+    {
+        if (turningAudioSource == null || turningClips == null || turningClips.Length == 0)
+            return;
 
+        // Если звук сейчас не играет, выбираем новый случайный и запускаем
+        if (!turningAudioSource.isPlaying)
+        {
+            int randomIndex = UnityEngine.Random.Range(0, turningClips.Length);
+            turningAudioSource.clip = turningClips[randomIndex];
+            turningAudioSource.Play();
+        }
+    }
+
+    private void StopTurningAudio()
+    {
+        // Ставим на паузу (чтобы при возобновлении движения звук не дергался)
+        if (turningAudioSource != null && turningAudioSource.isPlaying)
+        {
+            turningAudioSource.Pause();
+        }
+    }
+    
     public void BeginControl()
     {
         if (isControlling)
@@ -164,8 +238,9 @@ public class TrainingValveWheelController : MonoBehaviour
             playerControlLock?.LockControls();
 
         if (lockInteractionWhileControlling)
-            GameManager.Instance?.InteractionSystem?.LockInteraction(BuildPromptText());
+            GameManager.Instance?.InteractionSystem?.LockInteraction(string.Empty); // Изменили тут
 
+        lastMessageText = string.Empty; // Сброс кэша текста
         UpdateControlPrompt();
         onControlStarted?.Invoke();
     }
@@ -176,14 +251,15 @@ public class TrainingValveWheelController : MonoBehaviour
             return;
 
         isControlling = false;
-
+        StopTurningAudio();
         if (lockInteractionWhileControlling)
             GameManager.Instance?.InteractionSystem?.UnlockInteraction();
 
         if (lockPlayerWhileControlling)
             playerControlLock?.UnlockControls();
 
-        GameManager.Instance?.UIManager?.SetPrompt(string.Empty);
+        // Очищаем сообщение, передавая пустую строку и 0 секунд
+        GameManager.Instance?.UIManager?.SetMessage(string.Empty, 0f); 
         onControlEnded?.Invoke();
     }
 
@@ -236,7 +312,7 @@ public class TrainingValveWheelController : MonoBehaviour
                 closedFeedbackShown = true;
                 openFeedbackShown = false;
 
-                PlayOneShot(fullyClosedClip);
+                PlayRandomOneShot(fullyClosedClips);
                 onFullyClosed?.Invoke();
 
                 if (showFeedback)
@@ -253,7 +329,7 @@ public class TrainingValveWheelController : MonoBehaviour
                 openFeedbackShown = true;
                 closedFeedbackShown = false;
 
-                PlayOneShot(fullyOpenClip);
+                PlayRandomOneShot(fullyClosedClips);
                 onFullyOpened?.Invoke();
 
                 if (showFeedback)
@@ -304,7 +380,7 @@ public class TrainingValveWheelController : MonoBehaviour
         else if (!string.IsNullOrWhiteSpace(completesTaskId))
             GameManager.Instance?.ChecklistManager?.CompleteTask(completesTaskId);
 
-        PlayOneShot(completedClip);
+        PlayRandomOneShot(fullyClosedClips);
         onTaskCompleted?.Invoke();
 
         if (showFeedback)
@@ -335,14 +411,31 @@ public class TrainingValveWheelController : MonoBehaviour
                 targetVolume,
                 Time.deltaTime * 2.5f
             );
+    }   
+    private void PlayRandomOneShot(AudioClip[] clips)
+    {
+        if (clips == null || clips.Length == 0)
+            return;
+
+        // Выбираем случайный индекс от 0 до длины массива
+        int randomIndex = Random.Range(0, clips.Length);
+        AudioClip randomClip = clips[randomIndex];
+
+        PlayOneShot(randomClip);
     }
+
+    private string lastMessageText = string.Empty;
 
     private void UpdateControlPrompt()
     {
         string prompt = BuildPromptText();
 
-        GameManager.Instance?.InteractionSystem?.SetLockedPrompt(prompt);
-        GameManager.Instance?.UIManager?.SetPrompt(prompt);
+        // Обновляем UI только если текст (проценты) реально изменился
+        if (lastMessageText != prompt)
+        {
+            lastMessageText = prompt;
+            GameManager.Instance?.UIManager?.SetMessage(prompt, 0f);
+        }
     }
 
     private string BuildPromptText()

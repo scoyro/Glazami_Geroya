@@ -68,7 +68,7 @@ public class QuestValveController : MonoBehaviour
             progress += Time.deltaTime / rotationDuration;
             progress = Mathf.Clamp01(progress);
 
-            float currentAngle = Mathf.Lerp(0f, 360f, progress);
+            float currentAngle = Mathf.Lerp(0f, 180f, progress);
             wheelVisual.localRotation = baseRotation * Quaternion.AngleAxis(currentAngle, GetAxisVector());
 
             if (valveAudioSource != null && !valveAudioSource.isPlaying)

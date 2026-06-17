@@ -98,19 +98,23 @@ public class ChoiceSystem : MonoBehaviour
         events.SetCrisisMode(true);
         events.SetPhase(GamePhase.Crisis);
         events.StartIncidentTimer(incidentDuration);
+        StartCoroutine(ShowCrisisThoughtDelayed());
     }
     private IEnumerator ShowCrisisThoughtDelayed()
-{
-    yield return new WaitForSeconds(crisisThoughtDelay);
+    {
+        yield return new WaitForSeconds(crisisThoughtDelay);
 
-    if (gameManager == null || gameManager.GameStateManager == null)
-        yield break;
+        if (gameManager == null || gameManager.GameStateManager == null)
+            yield break;
 
-    if (gameManager.GameStateManager.Phase != GamePhase.Crisis)
-        yield break;
-    gameManager.EventManager?.RequestUiMessage(UIMessage);
-    gameManager.EventManager?.RequestThought(crisisThought);
-}
+        if (gameManager.GameStateManager.Phase != GamePhase.Crisis)
+            yield break;
+
+        // Оставляем только вывод системного сообщения
+        gameManager.EventManager?.RequestUiMessage(UIMessage);
+        
+        // Вызов RequestThought(crisisThought) полностью удален
+    }
 
     private void ResolveCrisisPhase(string actionId)
     {
