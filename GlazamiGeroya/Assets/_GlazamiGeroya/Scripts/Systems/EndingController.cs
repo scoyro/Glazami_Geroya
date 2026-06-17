@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.Runtime.InteropServices;
 
 public class EndingController : MonoBehaviour
 {
@@ -41,7 +42,8 @@ public class EndingController : MonoBehaviour
     [SerializeField] private string fallbackTitle = "Трагический исход";
 
     [TextArea(4, 10)]
-    [SerializeField] private string fallbackDescription =
+    [SerializeField]
+    private string fallbackDescription =
         "Добавьте текст концовки и историческую справку в инспекторе.";
 
     [Header("Behaviour")]
@@ -57,6 +59,10 @@ public class EndingController : MonoBehaviour
     [SerializeField] private float autoScrollSpeed = 4f;
     [SerializeField] private bool snapScrollToTopOnStart = true;
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+    [DllImport("__Internal")]
+    private static extern void GG_ReturnToSite(string url);
+#endif
     private readonly Dictionary<string, EndingData> endingMap = new Dictionary<string, EndingData>();
 
     private GameManager gameManager;
@@ -197,7 +203,7 @@ public class EndingController : MonoBehaviour
     {
         if (endingPanel != null)
             endingPanel.SetActive(true);
-            
+
         UnlockCursorForEnding();
         if (resultText != null)
             resultText.text = GetResultLabel(ending.result);
@@ -449,6 +455,11 @@ public class EndingController : MonoBehaviour
     public void ReturnToMenu()
     {
         Time.timeScale = 1f;
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+            Application.OpenURL("../index.html?completed=aldar&study=video#episodes");
+            return;
+#endif
 
         if (gameManager != null && gameManager.SceneController != null)
         {
