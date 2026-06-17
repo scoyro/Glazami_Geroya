@@ -567,7 +567,66 @@ private void ApplyGravityOnly()
 
         cameraTransform.localPosition = pos;
     }
+    private Coroutine activeLookAtCoroutine;
 
+    // Переменные для хранения текущей скорости вращения (нужны для SmoothDamp)
+    private float lookAtVelocityY;
+    private float lookAtVelocityX;
+
+    /// <summary>
+    /// Плавно и кинематографично поворачивает камеру и тело игрока к указанной цели.
+    /// </summary>
+    public void LookAtTargetSmooth(Transform target)
+    {
+        if (activeLookAtCoroutine != null)
+            StopCoroutine(activeLookAtCoroutine);
+
+        // Сбрасываем скорости перед новым поворотом
+        lookAtVelocityY = 0f;
+        lookAtVelocityX = 0f;
+
+        // 0.4f — это примерное время (в секундах), за которое камера достигнет цели. 
+        // Чем больше значение, тем ленивее и плавнее поворот.
+        activeLookAtCoroutine = StartCoroutine(SmoothLookAtRoutine(target, 1f));
+    }
+
+    private System.Collections.IEnumerator SmoothLookAtRoutine(Transform target, float smoothTime)
+    {
+        SetCameraExternallyControlled(true);
+
+        while (cameraExternallyControlled && target != null)
+        {
+            // 1. Плавный поворот тела (ось Y)
+            Vector3 bodyDirection = target.position - transform.position;
+            bodyDirection.y = 0f;
+
+            if (bodyDirection.sqrMagnitude > 0.01f)
+            {
+                float targetYaw = Quaternion.LookRotation(bodyDirection).eulerAngles.y;
+                float currentYaw = transform.eulerAngles.y;
+
+                // SmoothDampAngle сам понимает, в какую сторону крутить ближе (через 0 или 360)
+                float newYaw = Mathf.SmoothDampAngle(currentYaw, targetYaw, ref lookAtVelocityY, smoothTime);
+                transform.rotation = Quaternion.Euler(0f, newYaw, 0f);
+            }
+
+            // 2. Плавный наклон головы/камеры (ось X)
+            Vector3 headDirection = target.position - cameraTransform.position;
+            if (headDirection.sqrMagnitude > 0.01f)
+            {
+                float targetPitch = Quaternion.LookRotation(headDirection).eulerAngles.x;
+                
+                // Переводим углы для корректной работы
+                if (targetPitch > 180f) targetPitch -= 360f;
+
+                // Плавно меняем твою внутреннюю переменную xRotation
+                xRotation = Mathf.SmoothDampAngle(xRotation, targetPitch, ref lookAtVelocityX, smoothTime);
+                cameraTransform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+            }
+
+            yield return null;
+        }
+    }
     private void ResetHeadBobImmediate()
     {
         if (cameraTransform == null)
