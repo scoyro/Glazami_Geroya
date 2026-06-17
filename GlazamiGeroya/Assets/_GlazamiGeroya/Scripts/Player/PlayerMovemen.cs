@@ -64,7 +64,8 @@ public class PlayerController : MonoBehaviour
     private bool cameraExternallyControlled;
 
     private bool cinematicWalkMode;
-    private Transform cinematicWalkTarget;
+    private Transform[] cinematicWalkTargets;
+    private int currentWaypointIndex;
     private float cinematicWalkSpeed = 1f;
     private bool cinematicRequireW = true;
     private bool cinematicReachedTarget;
@@ -274,19 +275,19 @@ private void ApplyGravityOnly()
 
         return angle;
     }
-    public void StartCinematicWalk(Transform target, float walkSpeed, bool requireW)
+    public void StartCinematicWalk(Transform[] targets, float walkSpeed, bool requireW)
     {
-        if (target == null)
+        if (targets == null || targets.Length == 0)
             return;
 
         cinematicWalkMode = true;
-        cinematicWalkTarget = target;
+        cinematicWalkTargets = targets;
+        currentWaypointIndex = 0; // Начинаем с первой точки
         cinematicWalkSpeed = Mathf.Max(0f, walkSpeed);
         cinematicRequireW = requireW;
         cinematicReachedTarget = false;
 
         suppressNormalHeadBob = true;
-
         controlsLocked = false;
         cameraExternallyControlled = false;
 
@@ -296,10 +297,6 @@ private void ApplyGravityOnly()
 
         if (cameraTransform != null)
         {
-            // ВАЖНО:
-            // Берём текущий поворот камеры как базовый.
-            // То есть если камера уже посмотрела на дверь,
-            // хромающий bob будет накладываться поверх этого взгляда.
             cinematicBaseCameraLocalPosition = cameraTransform.localPosition;
             cinematicBaseCameraLocalRotation = cameraTransform.localRotation;
         }
@@ -307,10 +304,11 @@ private void ApplyGravityOnly()
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
+
     public void StopCinematicWalk()
     {
         cinematicWalkMode = false;
-        cinematicWalkTarget = null;
+        cinematicWalkTargets = null;
         cinematicReachedTarget = false;
 
         moveX = 0f;
@@ -403,16 +401,24 @@ private void ApplyGravityOnly()
 
         Vector3 horizontalMove = Vector3.zero;
 
-        if (cinematicWalkTarget != null)
+        if (cinematicWalkTargets != null && currentWaypointIndex < cinematicWalkTargets.Length)
         {
-            Vector3 toTarget = cinematicWalkTarget.position - transform.position;
+            Transform currentTarget = cinematicWalkTargets[currentWaypointIndex];
+            Vector3 toTarget = currentTarget.position - transform.position;
             toTarget.y = 0f;
 
             float distance = toTarget.magnitude;
 
             if (distance <= cinematicStopDistance)
             {
-                cinematicReachedTarget = true;
+                // Переключаемся на следующую точку
+                currentWaypointIndex++;
+                
+                // Если точки закончились, мы у цели
+                if (currentWaypointIndex >= cinematicWalkTargets.Length)
+                {
+                    cinematicReachedTarget = true;
+                }
             }
             else
             {
@@ -561,7 +567,66 @@ private void ApplyGravityOnly()
 
         cameraTransform.localPosition = pos;
     }
+    private Coroutine activeLookAtCoroutine;
 
+    // Переменные для хранения текущей скорости вращения (нужны для SmoothDamp)
+    private float lookAtVelocityY;
+    private float lookAtVelocityX;
+
+    /// <summary>
+    /// Плавно и кинематографично поворачивает камеру и тело игрока к указанной цели.
+    /// </summary>
+    public void LookAtTargetSmooth(Transform target)
+    {
+        if (activeLookAtCoroutine != null)
+            StopCoroutine(activeLookAtCoroutine);
+
+        // Сбрасываем скорости перед новым поворотом
+        lookAtVelocityY = 0f;
+        lookAtVelocityX = 0f;
+
+        // 0.4f — это примерное время (в секундах), за которое камера достигнет цели. 
+        // Чем больше значение, тем ленивее и плавнее поворот.
+        activeLookAtCoroutine = StartCoroutine(SmoothLookAtRoutine(target, 1f));
+    }
+
+    private System.Collections.IEnumerator SmoothLookAtRoutine(Transform target, float smoothTime)
+    {
+        SetCameraExternallyControlled(true);
+
+        while (cameraExternallyControlled && target != null)
+        {
+            // 1. Плавный поворот тела (ось Y)
+            Vector3 bodyDirection = target.position - transform.position;
+            bodyDirection.y = 0f;
+
+            if (bodyDirection.sqrMagnitude > 0.01f)
+            {
+                float targetYaw = Quaternion.LookRotation(bodyDirection).eulerAngles.y;
+                float currentYaw = transform.eulerAngles.y;
+
+                // SmoothDampAngle сам понимает, в какую сторону крутить ближе (через 0 или 360)
+                float newYaw = Mathf.SmoothDampAngle(currentYaw, targetYaw, ref lookAtVelocityY, smoothTime);
+                transform.rotation = Quaternion.Euler(0f, newYaw, 0f);
+            }
+
+            // 2. Плавный наклон головы/камеры (ось X)
+            Vector3 headDirection = target.position - cameraTransform.position;
+            if (headDirection.sqrMagnitude > 0.01f)
+            {
+                float targetPitch = Quaternion.LookRotation(headDirection).eulerAngles.x;
+                
+                // Переводим углы для корректной работы
+                if (targetPitch > 180f) targetPitch -= 360f;
+
+                // Плавно меняем твою внутреннюю переменную xRotation
+                xRotation = Mathf.SmoothDampAngle(xRotation, targetPitch, ref lookAtVelocityX, smoothTime);
+                cameraTransform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+            }
+
+            yield return null;
+        }
+    }
     private void ResetHeadBobImmediate()
     {
         if (cameraTransform == null)

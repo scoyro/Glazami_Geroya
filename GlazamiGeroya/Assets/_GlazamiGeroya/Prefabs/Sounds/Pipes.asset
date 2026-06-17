@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RandomAudioConfig
   clips:
   - {fileID: 8300000, guid: 4888c501b1be24642991ab2e2dbff286, type: 3}
-  minDelay: 10
-  maxDelay: 15
+  minDelay: 15
+  maxDelay: 20
   use3DSound: 1
   playOnStart: 1
   loopRandomly: 1

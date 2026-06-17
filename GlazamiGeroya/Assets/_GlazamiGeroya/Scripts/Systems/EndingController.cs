@@ -219,34 +219,32 @@ public class EndingController : MonoBehaviour
         if (descriptionText == null)
             yield break;
 
-        descriptionText.text = string.Empty;
-        descriptionText.maxVisibleCharacters = int.MaxValue;
+        if (string.IsNullOrEmpty(text))
+        {
+            descriptionText.text = string.Empty;
+            yield break;
+        }
+
+        // ОПТИМИЗАЦИЯ: Передаем текст целиком один раз
+        descriptionText.text = text;
+        descriptionText.maxVisibleCharacters = 0;
 
         ResetDescriptionScroll();
-
-        if (string.IsNullOrEmpty(text))
-            yield break;
-
-        float delay = charactersPerSecond > 0f
-            ? 1f / charactersPerSecond
-            : 0f;
-
-        StringBuilder builder = new StringBuilder(text.Length);
-
         isTypingDescription = true;
 
-        for (int i = 0; i < text.Length; i++)
+        float delay = charactersPerSecond > 0f ? 1f / charactersPerSecond : 0f;
+
+        for (int i = 0; i <= text.Length; i++)
         {
             if (skipRequested)
             {
-                descriptionText.text = text;
-                isTypingDescription = false;
-                ForceScrollToBottom();
-                yield break;
+                // Если скипнули, показываем все символы и выходим из цикла
+                descriptionText.maxVisibleCharacters = text.Length;
+                break;
             }
 
-            builder.Append(text[i]);
-            descriptionText.text = builder.ToString();
+            // Просто открываем следующую букву (без аллокаций памяти)
+            descriptionText.maxVisibleCharacters = i;
 
             if (delay > 0f)
                 yield return new WaitForSecondsRealtime(delay);
@@ -255,8 +253,7 @@ public class EndingController : MonoBehaviour
         }
 
         isTypingDescription = false;
-
-        descriptionText.text = text;
+        descriptionText.maxVisibleCharacters = int.MaxValue;
         ForceScrollToBottom();
     }
 
@@ -440,15 +437,13 @@ public class EndingController : MonoBehaviour
 
     public void RestartGame()
     {
+        // Восстанавливаем время, если игра была поставлена на паузу (Time.timeScale = 0)
+        // Это самая частая причина "неработающего" перезапуска
         Time.timeScale = 1f;
 
-        if (gameManager != null && gameManager.SceneController != null)
-        {
-            gameManager.SceneController.ReloadCurrentScene();
-            return;
-        }
-
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        // Получаем индекс текущей активной сцены и загружаем её заново
+        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
+        SceneManager.LoadScene(currentSceneIndex);
     }
 
     public void ReturnToMenu()

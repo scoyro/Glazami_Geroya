@@ -19,12 +19,12 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 19e1642ec02579e44ac302abec2b1d8b, type: 3}
   - {fileID: 8300000, guid: 801039605d048c74abfbd1b27fe8b398, type: 3}
   - {fileID: 8300000, guid: 855f92735730b9e49a92194c67773453, type: 3}
-  minDelay: 3
-  maxDelay: 9
+  minDelay: 6
+  maxDelay: 10
   use3DSound: 1
   playOnStart: 1
   loopRandomly: 1
-  volume: 0.338
+  volume: 0.225
   fadeInDuration: 0
   fadeOutDuration: 0.1
   minDistance: 1

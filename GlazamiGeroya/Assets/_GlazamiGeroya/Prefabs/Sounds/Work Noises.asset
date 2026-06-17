@@ -16,8 +16,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 5ce69b744e5321e4393851cd7b435795, type: 3}
   - {fileID: 8300000, guid: 50df6f1f6bbb5bb44b903da20870e048, type: 3}
   - {fileID: 8300000, guid: 2905786f3ca1d56488293b03d3982f59, type: 3}
-  minDelay: 7
-  maxDelay: 10
+  minDelay: 15
+  maxDelay: 20
   use3DSound: 1
   playOnStart: 1
   loopRandomly: 1

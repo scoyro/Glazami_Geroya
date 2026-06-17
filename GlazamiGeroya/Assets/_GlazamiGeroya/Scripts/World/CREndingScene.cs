@@ -38,7 +38,10 @@ public class DoorExplosionEndingController : MonoBehaviour
     [SerializeField] private EndingController endingController;
     [SerializeField] private string endingId = "iof_wrong_solution";
     [SerializeField] private bool playEndingAutomatically = true;
-
+    [Header("Visual Explosion")]
+    [SerializeField] private Light explosionLight;
+    [SerializeField] private float lightSpikeDuration = 0.05f;
+    [SerializeField] private float maxLightIntensity = 50f;
     [Header("Events")]
     [SerializeField] private UnityEvent onDoorStartedOpening;
     [SerializeField] private UnityEvent onExplosion;
@@ -86,6 +89,9 @@ public class DoorExplosionEndingController : MonoBehaviour
         if (delayBeforeExplosion > 0f)
             yield return new WaitForSeconds(delayBeforeExplosion);
 
+        if (explosionLight != null)
+            StartCoroutine(LightFlashRoutine());
+
         Play3D(explosionClip);
 
         onExplosion?.Invoke();
@@ -109,6 +115,33 @@ public class DoorExplosionEndingController : MonoBehaviour
         isRunning = false;
     }
 
+    private IEnumerator LightFlashRoutine()
+    {
+        explosionLight.enabled = true;
+        float time = 0f;
+
+        // Резко поднимаем яркость
+        while (time < lightSpikeDuration)
+        {
+            time += Time.deltaTime;
+            float t = time / lightSpikeDuration;
+            explosionLight.intensity = Mathf.Lerp(0f, maxLightIntensity, t);
+            yield return null;
+        }
+
+        explosionLight.intensity = maxLightIntensity;
+
+        // Можно добавить небольшое затухание, пока экран чернеет
+        time = 0f;
+        while (time < fadeOutAfterExplosionDelay + fadeOutDuration)
+        {
+            time += Time.deltaTime;
+            float t = time / (fadeOutAfterExplosionDelay + fadeOutDuration);
+            explosionLight.intensity = Mathf.Lerp(maxLightIntensity, 0f, t);
+            yield return null;
+        }
+    }
+    
     private IEnumerator OpenDoorSlightlyRoutine()
     {
         if (doorTransform == null || doorSlightlyOpenPoint == null)

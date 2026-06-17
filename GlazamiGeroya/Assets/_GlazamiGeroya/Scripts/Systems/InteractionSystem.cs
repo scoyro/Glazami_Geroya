@@ -1,8 +1,13 @@
 using UnityEngine;
 using System.Collections;
+
 /// <summary>
 /// Лучевая система взаимодействий игрока.
 /// Никаких всплывающих окон выбора — только осмотр и действие в мире.
+///
+/// Патч: добавлена поддержка lockedPromptText.
+/// Это нужно для мини-игр вроде вентиля: взаимодействие заблокировано,
+/// но подсказка A/D/Esc продолжает отображаться на HUD.
 /// </summary>
 public class InteractionSystem : MonoBehaviour
 {
@@ -23,6 +28,7 @@ public class InteractionSystem : MonoBehaviour
     private LayerMask interactionMask;
     private GameManager gameManager;
     private bool interactionLocked;
+    private string lockedPromptText = string.Empty;
 
     public void Initialize(GameManager manager)
     {
@@ -37,36 +43,36 @@ public class InteractionSystem : MonoBehaviour
         interactionMask = LayerMask.GetMask("Interactable");
     }
 
-   private void LateUpdate()
-{
-    if (playerCamera == null || gameManager == null || gameManager.UIManager == null)
-        return;
-
-    if (interactionLocked)
+    private void LateUpdate()
     {
-        gameManager.UIManager.SetPrompt(string.Empty);
-        return;
-    }
+        if (playerCamera == null || gameManager == null || gameManager.UIManager == null)
+            return;
 
-    InteractionTarget detectedTarget = GetCurrentTarget();
-
-    if (detectedTarget != null && detectedTarget.CanInteract(gameManager.GameStateManager))
-    {
-        bool canSwitchTarget =
-            lastTarget == null ||
-            detectedTarget == lastTarget ||
-            Time.time - lastTargetSwitchTime >= targetSwitchDelay;
-
-        if (canSwitchTarget)
+        if (interactionLocked)
         {
-            if (lastTarget != detectedTarget)
-                lastTargetSwitchTime = Time.time;
-
-            lastTarget = detectedTarget;
+            gameManager.UIManager.SetPrompt(lockedPromptText);
+            return;
         }
 
-        missedFrameCount = 0;
-    }
+        InteractionTarget detectedTarget = GetCurrentTarget();
+
+        if (detectedTarget != null && detectedTarget.CanInteract(gameManager.GameStateManager))
+        {
+            bool canSwitchTarget =
+                lastTarget == null ||
+                detectedTarget == lastTarget ||
+                Time.time - lastTargetSwitchTime >= targetSwitchDelay;
+
+            if (canSwitchTarget)
+            {
+                if (lastTarget != detectedTarget)
+                    lastTargetSwitchTime = Time.time;
+
+                lastTarget = detectedTarget;
+            }
+
+            missedFrameCount = 0;
+        }
         else
         {
             missedFrameCount++;
@@ -95,6 +101,7 @@ public class InteractionSystem : MonoBehaviour
 
         gameManager.UIManager.SetPrompt(string.Empty);
     }
+
     private IEnumerator ShowTextAfterDelay(InteractionData data)
     {
         yield return new WaitForSeconds(data.textDelay);
@@ -114,9 +121,10 @@ public class InteractionSystem : MonoBehaviour
         if (!string.IsNullOrWhiteSpace(data.uiMessage))
             events.RequestUiMessage(data.uiMessage, data.textDuration);
     }
+
     private InteractionTarget GetCurrentTarget()
     {
-        // Прямой raycast по центру экрана
+        // Прямой raycast по центру экрана.
         if (Physics.Raycast(
             playerCamera.transform.position,
             playerCamera.transform.forward,
@@ -130,7 +138,7 @@ public class InteractionSystem : MonoBehaviour
                 return target;
         }
 
-        // Fallback — SphereCast для объектов чуть в стороне от прицела
+        // Fallback — SphereCast для объектов чуть в стороне от прицела.
         float radius = (lastTarget != null) ? keepAimRadius : allowedAimRadius;
 
         RaycastHit[] hits = Physics.SphereCastAll(
@@ -203,18 +211,40 @@ public class InteractionSystem : MonoBehaviour
         if (Mathf.Abs(data.temperatureDelta) > 0.001f)
             gameManager.TemperatureManager?.ApplyTemperatureDelta(data.temperatureDelta);
     }
+
     public void LockInteraction()
     {
+        LockInteraction(string.Empty);
+    }
+
+    public void LockInteraction(string promptText)
+    {
         interactionLocked = true;
+        lockedPromptText = promptText ?? string.Empty;
         lastTarget = null;
         missedFrameCount = 0;
 
         if (gameManager != null && gameManager.UIManager != null)
-            gameManager.UIManager.SetPrompt(string.Empty);
+            gameManager.UIManager.SetPrompt(lockedPromptText);
+    }
+
+    public void SetLockedPrompt(string promptText)
+    {
+        if (!interactionLocked)
+            return;
+
+        lockedPromptText = promptText ?? string.Empty;
+
+        if (gameManager != null && gameManager.UIManager != null)
+            gameManager.UIManager.SetPrompt(lockedPromptText);
     }
 
     public void UnlockInteraction()
     {
         interactionLocked = false;
+        lockedPromptText = string.Empty;
+
+        if (gameManager != null && gameManager.UIManager != null)
+            gameManager.UIManager.SetPrompt(string.Empty);
     }
 }

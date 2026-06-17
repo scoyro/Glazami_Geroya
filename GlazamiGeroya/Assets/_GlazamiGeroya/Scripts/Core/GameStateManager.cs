@@ -5,8 +5,14 @@ using UnityEngine;
 /// </summary>
 public class GameStateManager : MonoBehaviour
 {
-    [SerializeField] private string incidentTimeoutEndingId = "too_late";
+    [Header("Endings")]
+    // Заменили "too_late" на "timeout_explosion", чтобы совпадало с EndingController
+    [SerializeField] private string incidentTimeoutEndingId = "timeout_explosion"; 
     [SerializeField] private string valveTimeoutEndingId = "burned_at_valve";
+
+    [Header("Cinematics")]
+    [Tooltip("Ссылка на скрипт вспышки. Если назначено, при окончании времени сначала будет взрыв.")]
+    [SerializeField] private ExplosionCinematic explosionCinematic;
 
     public GamePhase Phase { get; private set; } = GamePhase.Calm;
     public bool IsCrisisMode { get; private set; }
@@ -61,9 +67,23 @@ public class GameStateManager : MonoBehaviour
         timerActive = false;
 
         if (valveTimerActive)
+        {
             MarkDefeat(valveTimeoutEndingId);
+        }
         else
-            MarkDefeat(incidentTimeoutEndingId);
+        {
+            // Если прикреплен скрипт взрыва, запускаем кинематографичный финал
+            if (explosionCinematic != null)
+            {
+                IsGameOver = true; // Блокируем остальную логику
+                explosionCinematic.TriggerExplosion();
+            }
+            else
+            {
+                // Если скрипта нет, завершаем игру моментально
+                MarkDefeat(incidentTimeoutEndingId);
+            }
+        }
     }
 
     public void MarkVictory(string endingId)
