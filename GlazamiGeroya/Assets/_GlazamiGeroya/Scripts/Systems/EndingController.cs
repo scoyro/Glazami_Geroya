@@ -457,8 +457,8 @@ public class EndingController : MonoBehaviour
         Time.timeScale = 1f;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-            Application.OpenURL("../index.html?completed=aldar&study=video#episodes");
-            return;
+    GG_ReturnToSite("../index.html?completed=aldar&study=video#episodes");
+    return;
 #endif
 
         if (gameManager != null && gameManager.SceneController != null)
