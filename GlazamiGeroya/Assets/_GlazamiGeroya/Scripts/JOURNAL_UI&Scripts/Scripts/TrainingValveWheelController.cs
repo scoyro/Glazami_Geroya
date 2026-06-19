@@ -160,7 +160,7 @@ public class TrainingValveWheelController : MonoBehaviour
             if (preventEarlyRelease && openAmount < requiredReleasePercent)
             {
                 int neededPercent = Mathf.RoundToInt(requiredReleasePercent * 100f);
-                GameManager.Instance?.UIManager?.SetMessage($"Нельзя прекращать подачу! Докрутите вентиль!%", 4f);
+                GameManager.Instance?.UIManager?.SetMessage($"Нельзя прекращать подачу! Докрутите вентиль!", 4f);
                 return; // Прерываем выход, игрок остается привязан к вентилю
             }
 

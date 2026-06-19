@@ -116,6 +116,27 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
 {
+    if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (Cursor.lockState == CursorLockMode.Locked)
+            {
+                // Разблокируем и показываем курсор
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else
+            {
+                // Прячем и блокируем курсор обратно
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
+        if (Input.GetMouseButtonDown(0) && Cursor.lockState != CursorLockMode.Locked)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+
     if (previewCinematicLimpCamera)
     {
         if (!previewLockMovement)
@@ -339,6 +360,9 @@ private void ApplyGravityOnly()
 
     private void Look()
     {
+        if (Cursor.lockState != CursorLockMode.Locked)
+            return;
+
         if (cameraTransform == null)
             return;
 
