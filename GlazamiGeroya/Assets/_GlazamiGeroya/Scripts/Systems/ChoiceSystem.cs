@@ -12,7 +12,9 @@ public class ChoiceSystem : MonoBehaviour
     [Header("Incident Timing")]
     [SerializeField] private float incidentDuration = 60f;
     [SerializeField] private float valveDuration = 9f;
-    [SerializeField] private float crisisThoughtDelay = 3f;
+    [SerializeField] private float crisisThoughtDelay = 3f; // Оставлено на случай, если вернете мысли
+    [Tooltip("Задержка перед появлением UI сообщения")]
+    [SerializeField] private float uiMessageDelay = 3f; // <-- Новая переменная для UI сообщения
 
     [Header("Key Interaction IDs")]
     [SerializeField] private string startIncidentInteractionId = "incident_alarm";
@@ -22,7 +24,6 @@ public class ChoiceSystem : MonoBehaviour
     [SerializeField] private string enterValveActionId = "reach_valve";
     [SerializeField] private string valveCorrectActionId = "turn_valve_right";
     [SerializeField] private string valveWrongActionId = "turn_valve_left";
-    
 
     [Header("Thoughts")]
     [TextArea] [SerializeField] private string crisisThought = "Пожар... где перекрыть топливо?";
@@ -98,11 +99,15 @@ public class ChoiceSystem : MonoBehaviour
         events.SetCrisisMode(true);
         events.SetPhase(GamePhase.Crisis);
         events.StartIncidentTimer(incidentDuration);
-        StartCoroutine(ShowCrisisThoughtDelayed());
+        
+        // <-- Вызов обновленной корутины
+        StartCoroutine(ShowUIMessageDelayed()); 
     }
-    private IEnumerator ShowCrisisThoughtDelayed()
+
+    // <-- Обновленная корутина с новой переменной
+    private IEnumerator ShowUIMessageDelayed()
     {
-        yield return new WaitForSeconds(crisisThoughtDelay);
+        yield return new WaitForSeconds(uiMessageDelay);
 
         if (gameManager == null || gameManager.GameStateManager == null)
             yield break;
@@ -110,10 +115,8 @@ public class ChoiceSystem : MonoBehaviour
         if (gameManager.GameStateManager.Phase != GamePhase.Crisis)
             yield break;
 
-        // Оставляем только вывод системного сообщения
+        // Вывод системного сообщения
         gameManager.EventManager?.RequestUiMessage(UIMessage);
-        
-        // Вызов RequestThought(crisisThought) полностью удален
     }
 
     private void ResolveCrisisPhase(string actionId)
