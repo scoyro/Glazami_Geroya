@@ -1,0 +1,7 @@
+Файлы уже разложены по нужным папкам.
+
+Логотип: assets/logo-header.png
+Фоны: photos/hero_slide_01.jpg, photos/hero_slide_02.jpg, photos/hero_slide_03.jpg, photos/episode_aldar_bg.jpg
+Скриншоты: screens/screen_aldar_01.jpg, screens/screen_aldar_02.jpg, screens/screen_aldar_03.jpg
+
+Важно: сайт ожидает именно .jpg для скриншотов, поэтому загруженные .jpeg переименованы в .jpg.

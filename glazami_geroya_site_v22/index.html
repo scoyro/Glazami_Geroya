@@ -1,0 +1,1810 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Глазами Героя — интерактивный исторический проект</title>
+    <meta name="description" content="Интерактивная историческая игра о подвиге, выборе и ответственности." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&family=Rubik:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #ececec;
+            --surface: #f8f8f8;
+            --text: #14161b;
+            --muted: #636872;
+            --dark: #08111d;
+            --dark-2: #0c1724;
+            --line: rgba(255, 255, 255, .14);
+            --white: #ffffff;
+            --accent: #ff2530;
+            --accent-soft: rgba(255, 37, 48, .18);
+            --radius-xl: 34px;
+            --radius-lg: 26px;
+            --radius-pill: 999px;
+            --shadow: 0 24px 70px rgba(13, 21, 31, .12);
+            --hero-overlay: linear-gradient(90deg, rgba(7, 11, 18, .92) 0%, rgba(7, 11, 18, .32) 46%, rgba(7, 11, 18, 0) 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button {
+            font: inherit;
+        }
+
+        .site-header {
+            position: fixed;
+            z-index: 20;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(1040px, calc(100% - 36px));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(250, 250, 250, .94);
+            backdrop-filter: blur(14px);
+            box-shadow: 0 10px 36px rgba(9, 14, 22, .08);
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            font-weight: 800;
+        }
+
+        .brand-mark {
+            width: 44px;
+            height: 44px;
+            display: grid;
+            place-items: center;
+            position: relative;
+            overflow: hidden;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            border-radius: 0;
+        }
+
+        .brand-mark::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: center / contain no-repeat url('assets/logo-header.png');
+        }
+
+        .brand-mark-fallback {
+            position: relative;
+            z-index: 0;
+            font-family: 'Rubik', sans-serif;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .08em;
+        }
+
+        .brand-name {
+            font-weight: 800;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            color: var(--muted);
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .nav a:hover {
+            color: var(--text);
+        }
+
+        .nav-play {
+            padding: 12px 22px;
+            border-radius: 999px;
+            background: var(--accent);
+            color: white !important;
+            box-shadow: 0 14px 28px rgba(255, 37, 48, .22);
+        }
+
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 18% 22%, rgba(0, 212, 255, .12), transparent 28%),
+                radial-gradient(circle at 78% 18%, rgba(255, 37, 48, .13), transparent 24%),
+                linear-gradient(135deg, #09111c 0%, #0a1220 45%, #101a2b 100%);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(255, 255, 255, .08) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .08) 1px, transparent 1px);
+            background-size: 80px 80px;
+            opacity: .12;
+            pointer-events: none;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity .9s ease;
+            filter: saturate(.85) contrast(1.02);
+        }
+
+        .hero-bg.is-visible {
+            opacity: .28;
+        }
+
+        .hero-bg.is-placeholder {
+            background-image:
+                radial-gradient(circle at 80% 18%, rgba(255, 255, 255, .18), transparent 18%),
+                radial-gradient(circle at 12% 72%, rgba(0, 212, 255, .14), transparent 20%);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: var(--hero-overlay);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            width: min(1160px, calc(100% - 64px));
+            margin: 0 auto;
+            min-height: 100vh;
+            padding: 160px 0 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .hero-copy {
+            max-width: 660px;
+            margin-left: -150px;
+        }
+
+        .eyebrow,
+        .section-kicker {
+            margin: 0 0 18px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            font-weight: 800;
+            font-size: 14px;
+        }
+
+        h1,
+        h2,
+        .modal-title {
+            font-family: 'Manrope', sans-serif;
+            letter-spacing: -.055em;
+        }
+
+        .hero-title {
+            margin: 0;
+            max-width: 860px;
+            color: white;
+            font-size: clamp(54px, 6vw, 88px);
+            line-height: .92;
+            font-weight: 800;
+            font-family: 'Rubik', 'Manrope', sans-serif;
+            letter-spacing: -.04em;
+        }
+
+        .hero-text {
+            margin: 28px 0 0;
+            max-width: 620px;
+            color: rgba(255, 255, 255, .88);
+            font-size: clamp(19px, 1.45vw, 23px);
+            line-height: 1.15;
+            font-weight: 700;
+        }
+
+        .hero-actions {
+            margin-top: 28px;
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .button {
+            border: 0;
+            border-radius: 999px;
+            padding: 15px 23px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: 800;
+            transition: transform .18s ease, background .18s ease, opacity .18s ease;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+        }
+
+        .button.primary {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 18px 44px rgba(255, 37, 48, .26);
+        }
+
+        .button.secondary {
+            background: rgba(255, 255, 255, .95);
+            color: var(--text);
+        }
+
+        .asset-box {
+            margin-top: 28px;
+            max-width: 620px;
+            padding: 18px 18px 16px;
+            border: 1px solid rgba(255, 255, 255, .12);
+            border-radius: 22px;
+            background: rgba(255, 255, 255, .08);
+            backdrop-filter: blur(10px);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+        }
+
+        .asset-title {
+            margin: 0 0 10px;
+            color: white;
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+        }
+
+        .asset-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .asset-row-label {
+            width: 100%;
+            color: rgba(255, 255, 255, .78);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .file-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 9px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, .12);
+            border: 1px solid rgba(255, 255, 255, .12);
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .01em;
+        }
+
+        .scroll-hint {
+            position: absolute;
+            z-index: 2;
+            left: 50%;
+            bottom: 28px;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, .82);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .scroll-line {
+            width: 2px;
+            height: 54px;
+            background: rgba(255, 255, 255, .4);
+        }
+
+        .about,
+        .footer {
+            width: min(1160px, calc(100% - 64px));
+            margin: 54px auto;
+        }
+
+        .about-card,
+        .footer-main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            padding: 46px;
+            box-shadow: var(--shadow);
+        }
+
+        .about h2,
+        .footer h2 {
+            margin: 0;
+            font-size: clamp(38px, 4vw, 58px);
+            line-height: .95;
+        }
+
+        .about-body,
+        .footer-text {
+            color: var(--muted);
+            font-size: 18px;
+            line-height: 1.42;
+            font-weight: 600;
+        }
+
+        .about-points,
+        .team-list {
+            display: grid;
+            gap: 12px;
+            margin-top: 26px;
+        }
+
+        .about-points span,
+        .team-list span {
+            padding: 18px 16px;
+            border-radius: 16px;
+            background: #f0f0f0;
+            font-weight: 700;
+            font-size: 18px;
+            color: #31343b;
+        }
+
+        .episodes {
+            position: relative;
+            min-height: 100vh;
+            overflow: hidden;
+            background: var(--dark);
+        }
+
+        .episodes::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(255, 255, 255, .08) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .08) 1px, transparent 1px);
+            background-size: 80px 80px;
+            opacity: .10;
+            pointer-events: none;
+        }
+
+        .episode-bg,
+        .episode-bg-next {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity .55s ease;
+            filter: saturate(.86) contrast(1.02);
+        }
+
+        .episode-bg.is-visible {
+            opacity: .22;
+        }
+
+        .episode-bg-next.is-visible {
+            opacity: .22;
+        }
+
+        .episode-bg.is-placeholder,
+        .episode-bg-next.is-placeholder {
+            background-image:
+                radial-gradient(circle at 68% 24%, rgba(255, 37, 48, .14), transparent 18%),
+                radial-gradient(circle at 18% 72%, rgba(0, 212, 255, .08), transparent 20%);
+        }
+
+        .episode-shade {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 72% 18%, rgba(255, 37, 48, .18), transparent 22%),
+                linear-gradient(90deg, rgba(4, 8, 14, .90) 0%, rgba(4, 8, 14, .3) 38%, rgba(4, 8, 14, .1) 100%);
+        }
+
+        .episode-shell {
+            position: relative;
+            z-index: 1;
+            width: min(1160px, calc(100% - 64px));
+            min-height: 100vh;
+            margin: 0 auto;
+            padding: 110px 0 58px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .episode-topline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .section-kicker.light {
+            color: rgba(255, 255, 255, .82);
+        }
+
+        .episode-counter {
+            color: rgba(255, 255, 255, .82);
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .episode-layout {
+            display: grid;
+            grid-template-columns: minmax(330px, .88fr) minmax(500px, 1.12fr);
+            gap: 44px;
+            align-items: center;
+        }
+
+        .episode-copy {
+            min-width: 0;
+        }
+
+        .episode-copy h2 {
+            margin: 0;
+            color: white;
+            font-size: clamp(36px, 4.1vw, 58px);
+            line-height: .92;
+        }
+
+        .episode-description {
+            margin-top: 24px;
+            max-width: 550px;
+            color: rgba(255, 255, 255, .9);
+            font-size: 18px;
+            line-height: 1.42;
+            font-weight: 600;
+        }
+
+        .episode-meta {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .episode-meta span {
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, .08);
+            color: rgba(255, 255, 255, .84);
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .episode-files {
+            margin-top: 18px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .episode-actions {
+            margin-top: 26px;
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .episode-play {
+            position: relative;
+            color: white;
+            background: var(--accent);
+            box-shadow: 0 16px 36px rgba(255, 37, 48, .28), 0 0 0 1px rgba(255, 37, 48, .2);
+            overflow: hidden;
+        }
+
+        .episode-play::after {
+            content: '';
+            position: absolute;
+            inset: -70% auto -70% -30%;
+            width: 70%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .28), transparent);
+            transform: rotate(14deg);
+            animation: playShine 3s linear infinite;
+        }
+
+        @keyframes playShine {
+            from {
+                transform: translateX(-180%) rotate(14deg);
+            }
+
+            to {
+                transform: translateX(360%) rotate(14deg);
+            }
+        }
+
+        .ghost,
+        .study-button {
+            border: 1px solid rgba(255, 255, 255, .18);
+            background: rgba(255, 255, 255, .10);
+            color: white;
+            backdrop-filter: blur(8px);
+        }
+
+        .study-button[disabled] {
+            opacity: .52;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .study-lock {
+            font-size: 14px;
+            opacity: .85;
+        }
+
+        .episode-controls {
+            margin-top: 30px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .arrow {
+            width: 54px;
+            height: 54px;
+            border-radius: 999px;
+            border: 0;
+            display: grid;
+            place-items: center;
+            background: rgba(255, 255, 255, .14);
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, .18);
+        }
+
+        .arrow:hover {
+            background: rgba(255, 255, 255, .22);
+        }
+
+        .episode-dots {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            border: 0;
+            background: rgba(255, 255, 255, .34);
+            cursor: pointer;
+        }
+
+        .dot.active {
+            width: 44px;
+            background: #f4bd47;
+        }
+
+        .episode-visual {
+            min-width: 0;
+        }
+
+        .screen-frame {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border: 1px solid rgba(255, 255, 255, .18);
+            border-radius: 30px;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 84% 16%, rgba(255, 37, 48, .12), transparent 18%),
+                linear-gradient(145deg, rgba(14, 25, 38, .98) 0%, rgba(10, 18, 31, .94) 100%);
+            box-shadow: 0 28px 70px rgba(0, 0, 0, .28);
+            position: relative;
+            isolation: isolate;
+        }
+
+        @keyframes screenSweep {
+
+            0%,
+            62% {
+                transform: rotate(16deg) translateX(-180%);
+            }
+
+            100% {
+                transform: rotate(16deg) translateX(420%);
+            }
+        }
+
+        .screen-shot {
+            position: absolute;
+            inset: 0;
+            background-position: center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            opacity: 0;
+            transform: scale(1.025) translateX(24px);
+            transition: opacity .48s ease, transform .62s cubic-bezier(.2, .7, .2, 1);
+        }
+
+        .screen-shot.is-active {
+            opacity: 1;
+            transform: scale(1) translateX(0);
+        }
+
+        .screen-shot.is-placeholder {
+            background-image:
+                linear-gradient(135deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .02)),
+                radial-gradient(circle at 78% 18%, rgba(255, 255, 255, .08), transparent 14%);
+        }
+
+        .screen-shot.is-placeholder::after {
+            content: 'Файл не найден';
+            position: absolute;
+            left: 50%;
+            top: calc(50% + 34px);
+            transform: translate(-50%, 0);
+            color: rgba(255, 255, 255, .68);
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .screen-overlay {
+            position: absolute;
+            inset: auto 18px 18px 18px;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .screen-overlay-badge {
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(9, 14, 22, .66);
+            border: 1px solid rgba(255, 255, 255, .1);
+            color: white;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .screen-overlay-name {
+            padding: 9px 12px;
+            border-radius: 999px;
+            background: rgba(9, 14, 22, .66);
+            border: 1px solid rgba(255, 255, 255, .1);
+            color: rgba(255, 255, 255, .92);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .screen-nav {
+            margin-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: rgba(255, 255, 255, .86);
+        }
+
+        .screen-label {
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: .02em;
+        }
+
+        .screen-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .screen-arrow {
+            width: 38px;
+            height: 38px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, .18);
+            background: rgba(255, 255, 255, .08);
+            color: white;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            font-size: 18px;
+        }
+
+        .screen-arrow:hover {
+            background: rgba(255, 255, 255, .16);
+        }
+
+        .screen-counter {
+            font-weight: 800;
+            min-width: 58px;
+            text-align: center;
+        }
+
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: center;
+            color: var(--muted);
+            font-weight: 600;
+            padding: 18px 8px 0;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 40;
+            display: none;
+            place-items: center;
+            padding: 24px;
+            background: rgba(8, 12, 18, .64);
+        }
+
+        .modal.is-open {
+            display: grid;
+        }
+
+        .modal-card {
+            width: min(680px, 100%);
+            background: white;
+            color: var(--text);
+            border-radius: 26px;
+            padding: 30px;
+            box-shadow: 0 28px 80px rgba(0, 0, 0, .24);
+        }
+
+        .modal-title {
+            margin: 0;
+            font-size: clamp(30px, 3.4vw, 46px);
+            line-height: .94;
+        }
+
+        .modal-close {
+            float: right;
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            border: 0;
+            background: #f1f1f1;
+            cursor: pointer;
+            font-size: 24px;
+        }
+
+        .modal-text {
+            margin: 18px 0 0;
+            color: var(--muted);
+            font-size: 17px;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            margin-top: 28px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .modal-card-video {
+            width: min(920px, 100%);
+        }
+
+        .study-video {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            display: block;
+            margin-top: 18px;
+            border-radius: 20px;
+            background: #05080d;
+            border: 1px solid rgba(8, 12, 18, .12);
+            box-shadow: 0 18px 44px rgba(8, 12, 18, .16);
+            max-height: min(46vh, 460px);
+            object-fit: contain;
+        }
+
+        .modal {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-card {
+            max-height: calc(100dvh - 48px);
+            overflow-y: auto;
+        }
+
+        @media (max-height: 760px), (max-width: 620px) {
+            .modal {
+                padding: 14px;
+            }
+
+            .modal-card {
+                max-height: calc(100dvh - 28px);
+                padding: 22px;
+                border-radius: 22px;
+            }
+
+            .modal-title {
+                font-size: clamp(26px, 7vw, 36px);
+            }
+
+            .modal-text {
+                font-size: 16px;
+                line-height: 1.4;
+            }
+
+            .modal-actions {
+                margin-top: 18px;
+            }
+
+            .study-video {
+                max-height: 42vh;
+                border-radius: 16px;
+            }
+        }
+
+        @media (max-width: 980px) {
+            .nav {
+                display: none;
+            }
+
+            .hero-content,
+            .about,
+            .footer,
+            .episode-shell {
+                width: min(720px, calc(100% - 34px));
+            }
+
+            .about-card,
+            .footer-main,
+            .episode-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-title {
+                max-width: 100%;
+            }
+
+            .hero-text {
+                max-width: 100%;
+                font-size: 18px;
+                line-height: 1.26;
+            }
+
+            .episode-copy h2 {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .site-header {
+                width: calc(100% - 20px);
+            }
+
+            .about-card,
+            .footer-main {
+                padding: 34px;
+                gap: 28px;
+            }
+
+            .hero-content {
+                width: calc(100% - 24px);
+                padding-top: 138px;
+            }
+
+            .hero-title {
+                font-size: 46px;
+            }
+
+            .button {
+                width: 100%;
+            }
+
+            .hero-actions,
+            .episode-actions {
+                flex-direction: column;
+            }
+
+            .episode-shell {
+                width: calc(100% - 24px);
+                padding-top: 96px;
+            }
+
+            .episode-topline {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .episode-controls {
+                justify-content: center;
+            }
+
+            .screen-nav {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .screen-overlay {
+                align-items: stretch;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+
+        /* Дополнительная адаптация под телефоны */
+        html {
+            scroll-padding-top: 92px;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+
+        .brand,
+        .episode-copy,
+        .about-card > *,
+        .footer-main > * {
+            min-width: 0;
+        }
+
+        @media (max-width: 980px) {
+            .hero-copy {
+                margin-left: 0;
+            }
+
+            .hero-overlay {
+                background: linear-gradient(90deg, rgba(7, 11, 18, .92) 0%, rgba(7, 11, 18, .72) 58%, rgba(7, 11, 18, .46) 100%);
+            }
+        }
+
+        @media (max-width: 760px) {
+            :root {
+                --radius-xl: 24px;
+                --radius-lg: 20px;
+            }
+
+            .site-header {
+                top: 10px;
+                width: calc(100% - 20px);
+                padding: 7px 10px;
+                gap: 10px;
+            }
+
+            .brand {
+                gap: 9px;
+            }
+
+            .brand-mark {
+                width: 38px;
+                height: 38px;
+                flex: 0 0 auto;
+            }
+
+            .brand-name {
+                max-width: calc(100vw - 92px);
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                font-size: 15px;
+            }
+
+            .hero {
+                min-height: 100svh;
+            }
+
+            .hero-content {
+                width: calc(100% - 28px);
+                min-height: 100svh;
+                padding: 118px 0 72px;
+                justify-content: center;
+            }
+
+            .hero-title {
+                font-size: clamp(40px, 15vw, 54px);
+                line-height: .96;
+                letter-spacing: -.045em;
+            }
+
+            .hero-text {
+                margin-top: 20px;
+                font-size: 17px;
+                line-height: 1.32;
+                font-weight: 650;
+            }
+
+            .hero-actions {
+                margin-top: 24px;
+                gap: 10px;
+            }
+
+            .button {
+                min-height: 48px;
+                padding: 14px 17px;
+                text-align: center;
+            }
+
+            .scroll-hint {
+                display: none;
+            }
+
+            .about,
+            .footer {
+                width: calc(100% - 24px);
+                margin: 34px auto;
+            }
+
+            .about-card,
+            .footer-main {
+                padding: 24px;
+                gap: 24px;
+                border-radius: 24px;
+            }
+
+            .about h2,
+            .footer h2 {
+                font-size: clamp(29px, 9vw, 38px);
+                line-height: 1;
+                letter-spacing: -.045em;
+            }
+
+            .about-body,
+            .footer-text {
+                font-size: 16px;
+                line-height: 1.45;
+            }
+
+            .about-points,
+            .team-list {
+                gap: 9px;
+                margin-top: 20px;
+            }
+
+            .about-points span,
+            .team-list span {
+                padding: 14px 13px;
+                border-radius: 14px;
+                font-size: 15px;
+                line-height: 1.3;
+            }
+
+            .episodes {
+                min-height: auto;
+            }
+
+            .episode-shell {
+                width: calc(100% - 24px);
+                min-height: auto;
+                padding: 78px 0 42px;
+            }
+
+            .episode-layout {
+                gap: 26px;
+            }
+
+            .episode-copy h2 {
+                font-size: clamp(30px, 10vw, 40px);
+                line-height: 1;
+                letter-spacing: -.045em;
+            }
+
+            .episode-description {
+                margin-top: 18px;
+                font-size: 16px;
+                line-height: 1.45;
+            }
+
+            .episode-meta {
+                margin-top: 16px;
+                gap: 8px;
+            }
+
+            .episode-meta span {
+                font-size: 13px;
+            }
+
+            .episode-actions {
+                margin-top: 22px;
+                gap: 10px;
+            }
+
+            .episode-controls {
+                margin-top: 22px;
+                gap: 12px;
+            }
+
+            .arrow {
+                width: 46px;
+                height: 46px;
+                font-size: 21px;
+            }
+
+            .dot {
+                width: 10px;
+                height: 10px;
+            }
+
+            .dot.active {
+                width: 34px;
+            }
+
+            .screen-frame {
+                border-radius: 20px;
+            }
+
+            .screen-nav {
+                margin-top: 12px;
+                gap: 10px;
+            }
+
+            .screen-controls {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .screen-arrow {
+                width: 42px;
+                height: 42px;
+            }
+
+            .footer-bottom {
+                padding-top: 14px;
+                font-size: 14px;
+                line-height: 1.35;
+            }
+
+            .footer-links {
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .hero-content {
+                width: calc(100% - 22px);
+                padding-top: 108px;
+            }
+
+            .hero-title {
+                font-size: clamp(36px, 15vw, 46px);
+            }
+
+            .hero-text {
+                font-size: 16px;
+            }
+
+            .about-card,
+            .footer-main {
+                padding: 20px;
+            }
+
+            .episode-shell {
+                width: calc(100% - 20px);
+            }
+
+            .modal-card {
+                padding: 20px;
+            }
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            .button:hover,
+            .arrow:hover,
+            .screen-arrow:hover {
+                transform: none;
+            }
+
+            .button,
+            .arrow,
+            .screen-arrow,
+            .dot {
+                -webkit-tap-highlight-color: transparent;
+            }
+        }
+
+
+        /* Фикс якорных переходов для фиксированной шапки */
+        #about,
+        #episodes,
+        #team {
+            scroll-margin-top: 104px;
+        }
+
+        @media (max-width: 760px) {
+            html {
+                scroll-padding-top: 82px;
+            }
+
+            #about,
+            #episodes,
+            #team {
+                scroll-margin-top: 82px;
+            }
+
+            .episode-shell {
+                padding-top: 96px;
+                padding-bottom: 48px;
+                justify-content: flex-start;
+            }
+
+            .hero-actions,
+            .episode-actions {
+                width: 100%;
+                align-items: stretch;
+            }
+
+            .hero-actions .button,
+            .episode-actions .button {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .episode-shell {
+                padding-top: 92px;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+    <header class="site-header" id="top">
+        <a class="brand" href="#top" aria-label="Глазами Героя">
+            <span class="brand-mark" aria-hidden="true"><span class="brand-mark-fallback">ЛОГО</span></span>
+            <span class="brand-name">Глазами Героя</span>
+        </a>
+        <nav class="nav" aria-label="Основная навигация">
+            <a href="#about">О проекте</a>
+            <a href="#episodes">Подвиг</a>
+            <a href="#team">Команда</a>
+            <a class="nav-play" href="#episodes">Играть</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero" id="hero" aria-label="Главный экран проекта">
+            <div class="hero-bg hero-bg-a is-placeholder" aria-hidden="true"></div>
+            <div class="hero-bg hero-bg-b is-placeholder" aria-hidden="true"></div>
+            <div class="hero-overlay" aria-hidden="true"></div>
+            <div class="hero-content">
+                <div class="hero-copy">
+                    <p class="eyebrow">интерактивный исторический проект</p>
+                    <h1 class="hero-title"> Глазами Героя</h1>
+                    <p class="hero-text">Игра о выборе в критический момент. Исследуй обстановку,
+                        замечай важные детали и помни, что все зависит от тебя. </p>
+                    <div class="hero-actions">
+                        <a class="button primary" href="#episodes">Начать играть</a>
+                        <a class="button secondary" href="#about">О проекте</a>
+                    </div>
+                </div>
+            </div>
+            <a class="scroll-hint" href="#episodes" aria-label="Перейти к выбору подвига">
+                <span>листай ниже</span><span class="scroll-line"></span>
+            </a>
+        </section>
+
+        <section class="about" id="about">
+            <div class="about-card">
+                <div>
+                    <p class="section-kicker">о проекте</p>
+                    <h2>Вы не зритель. Вы влияете на ход истории здесь и сейчас.</h2>
+                </div>
+                <div class="about-body">
+                    <p>Проект собирает реальные истории подвига в формате коротких интерактивных эпизодов. Игрок не
+                        просто читает о событии, а проходит напряжённый фрагмент сам, а затем возвращается к
+                        историческому контексту.</p>
+                    <div class="about-points">
+                        <span><b>1</b> короткий интерактивный формат</span>
+                        <span><b>2</b> действия вместо пересказа</span>
+                        <span><b>3</b> сохранение памяти о событии</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="episodes" id="episodes" aria-label="Выбор подвига">
+            <div class="episode-bg is-visible is-placeholder" aria-hidden="true"></div>
+            <div class="episode-bg-next is-placeholder" aria-hidden="true"></div>
+            <div class="episode-shade" aria-hidden="true"></div>
+            <div class="episode-shell">
+                <div class="episode-topline">
+                    <span class="section-kicker light">выбор подвига</span>
+                    <div class="episode-counter"><span id="episodeNumber">01</span> / <span id="episodeTotal">03</span>
+                    </div>
+                </div>
+                <div class="episode-layout" id="episodeLayout">
+                    <article class="episode-copy">
+                        <h2 id="episodeTitle">Подвиг Алдара Цыденжапова</h2>
+                        <p class="episode-description" id="episodeDescription">Первый игровой эпизод посвящён молодому
+                            матросу Тихоокеанского флота. За одно мгновение он сделал выбор, который помог
+                            предотвратить жертвы сотен людей. </p>
+                        <div class="episode-meta" id="episodeMeta" aria-label="Особенности эпизода"></div>
+                        <div class="episode-actions">
+                            <a class="button episode-play" id="episodePlay" href="game/index.html"><span>Запустить
+                                    эпизод</span></a>
+                            <button class="button study-button" id="studyButton" type="button" disabled
+                                title="Станет доступно после прохождения">
+                                <span class="study-lock">🔒</span>
+                                <span>Изучить событие</span>
+                            </button>
+                        </div>
+                        <div class="episode-controls">
+                            <button class="arrow" id="prevEpisode" type="button"
+                                aria-label="Предыдущий подвиг">←</button>
+                            <div class="episode-dots" id="episodeDots" aria-label="Слайды подвигов"></div>
+                            <button class="arrow" id="nextEpisode" type="button"
+                                aria-label="Следующий подвиг">→</button>
+                        </div>
+                    </article>
+                    <aside class="episode-visual" aria-label="Скриншоты эпизода">
+                        <div class="screen-frame" id="screenFrame">
+                            <div class="screen-shot is-active is-placeholder" id="screenShotA" aria-hidden="true"></div>
+                            <div class="screen-shot is-placeholder" id="screenShotB" aria-hidden="true"></div>
+                        </div>
+                        <div class="screen-nav">
+                            <div class="screen-label">Кадры эпизода</div>
+                            <div class="screen-controls">
+                                <button class="screen-arrow" id="prevScreen" type="button"
+                                    aria-label="Предыдущий скриншот">←</button>
+                                <div class="screen-counter" id="screenCounter">01 / 03</div>
+                                <button class="screen-arrow" id="nextScreen" type="button"
+                                    aria-label="Следующий скриншот">→</button>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer" id="team">
+        <div class="footer-main">
+            <div>
+                <p class="section-kicker">команда проекта</p>
+                <h2>Проект разработан командой DREAM TEAM</h2>
+                <p class="footer-text">Учебный исторический проект на Unity WebGL: сценарий, разработка, визуальная
+                    подача и историческая часть собраны в один интерактивный эпизод.</p>
+            </div>
+            <div class="team-list">
+                <span>Матвей — Разработчик, лидер</span>
+                <span>Артём — Разработчик, технический лидер</span>
+                <span>Артём — 3D-дизайнер, левел-дизайнер</span>
+                <span>Юля — 3D-дизайнер, 3D-аниматор</span>
+                <span>Илья — Композитор, моушендизайнер</span>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="footer-links">
+                <a href="#about">О проекте</a>
+                <a href="#episodes">Подвиг</a>
+                <a href="game/index.html">Играть</a>
+            </div>
+            <p>© Глазами Героя. Проект разработан командой DREAM TEAM.</p>
+        </div>
+    </footer>
+
+    <section class="modal" id="studyModal" aria-hidden="true">
+        <div class="modal-card modal-card-video" role="dialog" aria-modal="true" aria-labelledby="studyTitle">
+            <button class="modal-close" data-close="studyModal" aria-label="Закрыть">×</button>
+            <p class="section-kicker">видео-справка</p>
+            <h2 class="modal-title" id="studyTitle">Подвиг Алдара Цыденжапова</h2>
+            <p class="modal-text" id="studyText"></p>
+            <video class="study-video" id="studyVideo" controls preload="metadata" poster="videos/aldar_poster.jpg">
+                <source id="studyVideoSource" src="videos/aldar_reference.mp4" type="video/mp4">
+                Ваш браузер не поддерживает видео.
+            </video>
+            <div class="modal-actions">
+                <a class="button primary" id="studyReplay" href="game/index.html">Пройти ещё раз</a>
+                <button class="button secondary" type="button" data-close="studyModal">Вернуться назад</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="modal" id="resultModal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+            <button class="modal-close" data-close="resultModal" aria-label="Закрыть">×</button>
+            <p class="section-kicker">итоги прохождения</p>
+            <h2 class="modal-title" id="resultTitle">Эпизод завершён</h2>
+            <p class="modal-text" id="resultText">Ты прошёл эпизод. Теперь можешь изучить историческое событие
+                подробнее или попробовать еще раз. </p>
+            <div class="modal-actions">
+                <a class="button primary" id="resultReplay" href="game/index.html">Пройти ещё раз</a>
+                <button class="button secondary" id="resultStudy" type="button">Изучить событие</button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        const heroPhotos = [
+            { url: 'photos/hero_slide_01.jpg', label: 'photos/hero_slide_01.jpg' },
+            { url: 'photos/hero_slide_02.jpg', label: 'photos/hero_slide_02.jpg' },
+            { url: 'photos/hero_slide_03.jpg', label: 'photos/hero_slide_03.jpg' }
+        ];
+
+        const episodes = [
+            {
+                id: 'aldar',
+                title: 'Подвиг Алдара Цыденжапова',
+                description: 'Первый игровой эпизод посвящён молодому матросу Тихоокеанского флота. За одно мгновение он сделал выбор, который помог предотвратить жертвы сотен людей.',
+                meta: ['Прямо в браузере', '5–15 минут', '3 концовки'],
+                accent: '#ff2530',
+                bg: 'photos/episode_aldar_bg.jpg',
+                screens: ['screens/screen_aldar_01.jpg', 'screens/screen_aldar_02.jpg', 'screens/screen_aldar_03.jpg'],
+                playUrl: 'game/index.html',
+                videoSrc: 'videos/aldar_reference.mp4',
+                videoPoster: 'videos/aldar_poster.jpg',
+                studyText: '24 сентября 2010 года во время аварии на эсминце «Быстрый» матрос Алдар Цыденжапов совершил подвиг. Находясь в опасной зоне машинного отделения, он перекрыл подачу топлива. Благодаря его самоотверженным действиям удалось избежать катастрофы и спасти экипаж корабля.'
+            },
+            {
+                id: 'future-1',
+                title: 'Следующий подвиг',
+                description: 'Этот слайд оставлен как основа для будущего эпизода.',
+                accent: '#f2b240',
+                bg: 'photos/episode_next_bg.jpg',
+                screens: ['screens/screen_next_01.jpg', 'screens/screen_next_02.jpg', 'screens/screen_next_03.jpg'],
+                playUrl: '#',
+                studyText: 'Здесь будет справка.'
+            },
+            {
+                id: 'future-2',
+                title: 'Следующий подвиг №2',
+                description: 'Этот слайд оставлен как основа для будущего эпизода.',
+                accent: '#2e61ff',
+                bg: 'photos/episode_story_bg.jpg',
+                screens: ['screens/screen_story_01.jpg', 'screens/screen_story_02.jpg', 'screens/screen_story_03.jpg'],
+                playUrl: '#',
+                studyText: 'Здесь будет справка.'
+            }
+        ];
+
+        function loadImageState(url) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
+                img.src = url;
+            });
+        }
+
+        const bgA = document.querySelector('.hero-bg-a');
+        const bgB = document.querySelector('.hero-bg-b');
+        let heroIndex = 0;
+        let heroUsingA = true;
+
+        async function setVisualLayer(layer, url) {
+            const exists = await loadImageState(url);
+            if (exists) {
+                layer.style.backgroundImage = `url("${url}")`;
+                layer.classList.remove('is-placeholder');
+            } else {
+                layer.style.backgroundImage = '';
+                layer.classList.add('is-placeholder');
+            }
+        }
+
+        async function setHero(index) {
+            const active = heroUsingA ? bgA : bgB;
+            const next = heroUsingA ? bgB : bgA;
+            await setVisualLayer(next, heroPhotos[index].url);
+            next.classList.add('is-visible');
+            active.classList.remove('is-visible');
+            heroUsingA = !heroUsingA;
+        }
+
+        setVisualLayer(bgA, heroPhotos[0].url).then(() => bgA.classList.add('is-visible'));
+        setInterval(() => {
+            heroIndex = (heroIndex + 1) % heroPhotos.length;
+            setHero(heroIndex);
+        }, 5600);
+
+
+
+        function getFixedHeaderOffset() {
+            const header = document.querySelector('.site-header');
+            if (!header) return 92;
+
+            const rect = header.getBoundingClientRect();
+            return Math.ceil(rect.height + 24);
+        }
+
+        function scrollToAnchorSafely(hash, behavior = 'smooth') {
+            if (!hash || hash === '#') return false;
+
+            const target = document.querySelector(hash);
+            if (!target) return false;
+
+            const top = target.getBoundingClientRect().top + window.pageYOffset - getFixedHeaderOffset();
+
+            window.scrollTo({
+                top: Math.max(0, top),
+                behavior
+            });
+
+            return true;
+        }
+
+        document.querySelectorAll('a[href^="#"]').forEach((link) => {
+            const hash = link.getAttribute('href');
+            if (!hash || hash === '#') return;
+
+            link.addEventListener('click', (event) => {
+                if (!document.querySelector(hash)) return;
+
+                event.preventDefault();
+
+                if (scrollToAnchorSafely(hash)) {
+                    history.pushState(null, '', hash);
+                }
+            });
+        });
+
+        const root = document.documentElement;
+        const episodeBg = document.querySelector('.episode-bg');
+        const episodeBgNext = document.querySelector('.episode-bg-next');
+        const episodeNumber = document.getElementById('episodeNumber');
+        const episodeTotal = document.getElementById('episodeTotal');
+        const episodeTitle = document.getElementById('episodeTitle');
+        const episodeDescription = document.getElementById('episodeDescription');
+        const episodeMeta = document.getElementById('episodeMeta');
+        const episodePlay = document.getElementById('episodePlay');
+        const episodeDots = document.getElementById('episodeDots');
+        const studyButton = document.getElementById('studyButton');
+        const episodeBgName = document.getElementById('episodeBgName');
+        const screenFrame = document.getElementById('screenFrame');
+        const screenCounter = document.getElementById('screenCounter');
+        const screenFileName = document.getElementById('screenFileName');
+        const prevEpisode = document.getElementById('prevEpisode');
+        const nextEpisode = document.getElementById('nextEpisode');
+        const prevScreen = document.getElementById('prevScreen');
+        const nextScreen = document.getElementById('nextScreen');
+        const screenShotA = document.getElementById('screenShotA');
+        const screenShotB = document.getElementById('screenShotB');
+        const studyModal = document.getElementById('studyModal');
+        const resultModal = document.getElementById('resultModal');
+        const studyTitle = document.getElementById('studyTitle');
+        const studyText = document.getElementById('studyText');
+        const studyVideo = document.getElementById('studyVideo');
+        const studyVideoSource = document.getElementById('studyVideoSource');
+        const studyReplay = document.getElementById('studyReplay');
+        const resultReplay = document.getElementById('resultReplay');
+        const resultStudy = document.getElementById('resultStudy');
+
+        let currentEpisode = 0;
+        let currentScreen = 0;
+        let screenTimer = null;
+        let bgReady = false;
+        let screenUsingA = true;
+
+        function completionKeyFor(ep) { return `gg_completed_${ep.id}`; }
+        function isCompleted(ep) { return localStorage.getItem(completionKeyFor(ep)) === 'true'; }
+
+        async function swapEpisodeBg(url) {
+            if (!bgReady) {
+                await setVisualLayer(episodeBg, url);
+                episodeBg.classList.add('is-visible');
+                bgReady = true;
+                return;
+            }
+            await setVisualLayer(episodeBgNext, url);
+            episodeBgNext.classList.add('is-visible');
+            setTimeout(() => {
+                episodeBg.style.backgroundImage = episodeBgNext.style.backgroundImage;
+                episodeBg.classList.toggle('is-placeholder', episodeBgNext.classList.contains('is-placeholder'));
+                episodeBg.classList.add('is-visible');
+                episodeBgNext.classList.remove('is-visible');
+            }, 420);
+        }
+
+        function renderMeta(items) {
+            episodeMeta.innerHTML = '';
+            items.forEach((item) => {
+                const span = document.createElement('span');
+                span.textContent = item;
+                episodeMeta.appendChild(span);
+            });
+        }
+
+        function renderEpisodeDots() {
+            episodeDots.innerHTML = '';
+            episodes.forEach((_, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'dot' + (i === currentEpisode ? ' active' : '');
+                btn.type = 'button';
+                btn.setAttribute('aria-label', `Слайд ${i + 1}`);
+                btn.addEventListener('click', () => {
+                    currentEpisode = i;
+                    currentScreen = 0;
+                    renderEpisode();
+                });
+                episodeDots.appendChild(btn);
+            });
+        }
+
+        async function renderScreen() {
+            const ep = episodes[currentEpisode];
+            const total = ep.screens.length;
+            currentScreen = (currentScreen + total) % total;
+            const currentFile = ep.screens[currentScreen];
+            const nextLayer = screenUsingA ? screenShotB : screenShotA;
+            const activeLayer = screenUsingA ? screenShotA : screenShotB;
+            const exists = await loadImageState(currentFile);
+
+            if (exists) {
+                nextLayer.style.backgroundImage = `url("${currentFile}")`;
+                nextLayer.classList.remove('is-placeholder');
+            } else {
+                nextLayer.style.backgroundImage = '';
+                nextLayer.classList.add('is-placeholder');
+            }
+
+            nextLayer.classList.add('is-active');
+            activeLayer.classList.remove('is-active');
+            screenUsingA = !screenUsingA;
+            screenCounter.textContent = `${String(currentScreen + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}`;
+            if (screenFileName) screenFileName.textContent = currentFile;
+        }
+
+        function startScreenRotation() {
+            if (screenTimer) clearInterval(screenTimer);
+            screenTimer = setInterval(() => {
+                currentScreen += 1;
+                renderScreen();
+            }, 3600);
+        }
+
+        function updateStudyState() {
+            const ep = episodes[currentEpisode];
+            const unlocked = isCompleted(ep);
+            studyButton.disabled = !unlocked;
+            studyButton.innerHTML = unlocked ? '<span>Изучить событие</span>' : '<span class="study-lock">🔒</span><span>Изучить событие</span>';
+            studyButton.title = unlocked ? 'Открыть историческую справку' : 'Станет доступно после прохождения';
+        }
+
+        function renderEpisode() {
+            const ep = episodes[currentEpisode];
+            root.style.setProperty('--accent', ep.accent);
+            swapEpisodeBg(ep.bg);
+            if (episodeBgName) episodeBgName.textContent = ep.bg;
+            episodeNumber.textContent = String(currentEpisode + 1).padStart(2, '0');
+            episodeTotal.textContent = String(episodes.length).padStart(2, '0');
+            episodeTitle.textContent = ep.title;
+            episodeDescription.textContent = ep.description;
+            renderMeta(ep.meta);
+            renderEpisodeDots();
+            currentScreen = 0;
+            renderScreen();
+            startScreenRotation();
+            episodePlay.href = ep.playUrl;
+            episodePlay.querySelector('span').textContent = currentEpisode === 0 ? 'Запустить эпизод' : 'Скоро';
+            if (currentEpisode === 0) {
+                episodePlay.removeAttribute('aria-disabled');
+                episodePlay.style.pointerEvents = 'auto';
+                episodePlay.style.opacity = '1';
+            } else {
+                episodePlay.setAttribute('aria-disabled', 'true');
+                episodePlay.style.pointerEvents = 'none';
+                episodePlay.style.opacity = '.72';
+            }
+            updateStudyState();
+        }
+
+        function openModal(modal) { modal.classList.add('is-open'); modal.setAttribute('aria-hidden', 'false'); }
+        function closeModal(modal) {
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+
+            if (modal === studyModal && studyVideo) {
+                studyVideo.pause();
+                studyVideo.currentTime = 0;
+            }
+        }
+
+        studyButton.addEventListener('click', () => {
+            const ep = episodes[currentEpisode];
+            if (!isCompleted(ep)) return;
+            studyTitle.textContent = ep.title;
+            studyText.textContent = ep.studyText;
+            studyReplay.href = ep.playUrl;
+
+            if (studyVideo && studyVideoSource && ep.videoSrc) {
+                studyVideoSource.src = ep.videoSrc;
+                studyVideo.poster = ep.videoPoster || '';
+                studyVideo.load();
+            }
+
+            openModal(studyModal);
+        });
+        resultStudy.addEventListener('click', () => {
+            closeModal(resultModal);
+            studyButton.click();
+        });
+        document.querySelectorAll('[data-close]').forEach(btn => {
+            btn.addEventListener('click', () => closeModal(document.getElementById(btn.dataset.close)));
+        });
+        [studyModal, resultModal].forEach(modal => {
+            modal.addEventListener('click', e => { if (e.target === modal) closeModal(modal); });
+        });
+
+        prevEpisode.addEventListener('click', () => { currentEpisode = (currentEpisode - 1 + episodes.length) % episodes.length; renderEpisode(); });
+        nextEpisode.addEventListener('click', () => { currentEpisode = (currentEpisode + 1) % episodes.length; renderEpisode(); });
+        prevScreen.addEventListener('click', () => { currentScreen -= 1; renderScreen(); startScreenRotation(); });
+        nextScreen.addEventListener('click', () => { currentScreen += 1; renderScreen(); startScreenRotation(); });
+        screenFrame.addEventListener('click', () => { currentScreen += 1; renderScreen(); startScreenRotation(); });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') { currentEpisode = (currentEpisode - 1 + episodes.length) % episodes.length; renderEpisode(); }
+            if (e.key === 'ArrowRight') { currentEpisode = (currentEpisode + 1) % episodes.length; renderEpisode(); }
+            if (e.key === 'Escape') { closeModal(studyModal); closeModal(resultModal); }
+        });
+
+        function handleCompletionReturn() {
+            const params = new URLSearchParams(window.location.search);
+            const completedId = params.get('completed');
+            if (!completedId) return;
+            const ep = episodes.find(item => item.id === completedId);
+            if (!ep) return;
+            localStorage.setItem(completionKeyFor(ep), 'true');
+            currentEpisode = episodes.findIndex(item => item.id === completedId);
+            renderEpisode();
+            resultReplay.href = ep.playUrl;
+            openModal(resultModal);
+            history.replaceState({}, document.title, window.location.pathname + '#episodes');
+        }
+
+        renderEpisode();
+        handleCompletionReturn();
+
+        requestAnimationFrame(() => {
+            if (window.location.hash && !document.querySelector('.modal.is-open')) {
+                scrollToAnchorSafely(window.location.hash, 'auto');
+            }
+        });
+    </script>
+</body>
+
+</html>
