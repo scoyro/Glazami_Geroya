@@ -10,7 +10,7 @@ public static class GameBootstrapper
         QualitySettings.vSyncCount = 0;
         
         // Устанавливаем жесткий лимит для всего проекта
-        Application.targetFrameRate = 30;
+        Application.targetFrameRate = 90;
         
         Debug.Log("Глобальные настройки применены: VSync выключен, FPS ограничен до 120.");
     }
