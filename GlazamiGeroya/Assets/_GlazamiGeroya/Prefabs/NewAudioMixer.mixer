@@ -89,6 +89,8 @@ AudioMixerController:
   m_ExposedParameters:
   - guid: e1a93dea6714962479ea8b220f28af9a
     name: AmbienceVolume
+  - guid: 92649585e0acf4a4597bd0599b65feca
+    name: Master
   - guid: 72cd1ad8b4b41ee4e971a1068f453aaa
     name: SFXVolume
   - guid: 8aaa0da492d08794aacf52ff4b78b46a
@@ -149,6 +151,7 @@ AudioMixerSnapshotController:
   m_SnapshotID: f32fd7bce6280014aa19de6430ba055b
   m_FloatValues:
     8aaa0da492d08794aacf52ff4b78b46a: 10
+    92649585e0acf4a4597bd0599b65feca: 20
     72cd1ad8b4b41ee4e971a1068f453aaa: -10.6
     e1a93dea6714962479ea8b220f28af9a: -31.6
   m_TransitionOverrides: {}

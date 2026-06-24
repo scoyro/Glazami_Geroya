@@ -15,7 +15,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Mouse Look")]
     public Transform cameraTransform;
-    public float mouseSensitivity = 200f;
+    public float mouseSensitivity = 160f;
     public float minY = -90f;
     public float maxY = 90f;
 
@@ -115,64 +115,45 @@ public class PlayerController : MonoBehaviour
     }
 
     private void Update()
-{
-    if (Input.GetKeyDown(KeyCode.Escape))
+    {
+        // Логика курсора и Escape удалена — теперь за это отвечает SettingsUI!
+
+        if (previewCinematicLimpCamera)
         {
-            if (Cursor.lockState == CursorLockMode.Locked)
-            {
-                // Разблокируем и показываем курсор
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
+            if (!previewLockMovement)
+                Move();
             else
-            {
-                // Прячем и блокируем курсор обратно
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
+                ApplyGravityOnly();
+
+            HandleCinematicLimpPreview();
+            return;
         }
-        if (Input.GetMouseButtonDown(0) && Cursor.lockState != CursorLockMode.Locked)
+
+        if (!controlsLocked && !cameraExternallyControlled && !cinematicWalkMode)
+            Look();
+
+        Move();
+
+        if (cameraExternallyControlled)
+            return;
+
+        if (cinematicWalkMode)
         {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            HandleCinematicLimpBob();
+            return;
         }
 
-    if (previewCinematicLimpCamera)
-    {
-        if (!previewLockMovement)
-            Move();
+        if (suppressNormalHeadBob)
+        {
+            ResetHeadBob();
+            return;
+        }
+
+        if (!controlsLocked)
+            HandleHeadBob();
         else
-            ApplyGravityOnly();
-
-        HandleCinematicLimpPreview();
-        return;
+            ResetHeadBob();
     }
-
-    if (!controlsLocked && !cameraExternallyControlled && !cinematicWalkMode)
-        Look();
-
-    Move();
-
-    if (cameraExternallyControlled)
-        return;
-
-    if (cinematicWalkMode)
-    {
-        HandleCinematicLimpBob();
-        return;
-    }
-
-    if (suppressNormalHeadBob)
-    {
-        ResetHeadBob();
-        return;
-    }
-
-    if (!controlsLocked)
-        HandleHeadBob();
-    else
-        ResetHeadBob();
-}
     private void HandleCinematicLimpPreview()
 {
     if (cameraTransform == null)
@@ -366,8 +347,12 @@ private void ApplyGravityOnly()
         if (cameraTransform == null)
             return;
 
-        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
+        // Берем актуальную чувствительность из нашего менеджера настроек
+        float currentSensitivity = SettingsManager.Instance.MouseSensitivity;
+
+        // Используем её вместо локальной переменной
+        float mouseX = Input.GetAxis("Mouse X") * currentSensitivity * Time.deltaTime;
+        float mouseY = Input.GetAxis("Mouse Y") * currentSensitivity * Time.deltaTime;
 
         xRotation -= mouseY;
         xRotation = Mathf.Clamp(xRotation, minY, maxY);
