@@ -78,7 +78,7 @@ public class SettingsManager : MonoBehaviour
         OnSettingsChanged?.Invoke(); 
     }
 
-    private void ApplyAllAudioSettings()
+    public void ApplyAllAudioSettings()
     {
         UpdateMixerVolume("Master", MasterVolume); // Оставляем Master, он совпадает
         UpdateMixerVolume("AmbienceVolume", AmbienceVolume); // Меняем здесь

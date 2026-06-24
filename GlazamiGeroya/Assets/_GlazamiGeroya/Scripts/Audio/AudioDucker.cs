@@ -12,14 +12,13 @@ public class AudioDucker : MonoBehaviour
     [SerializeField] private string sfxVolumeParam = "SFXVolume";
 
     [Header("Volume")]
-    [SerializeField] private float normalVolumeDb = 0f;
+    [Tooltip("До скольки децибел приглушать звук")]
     [SerializeField] private float duckedVolumeDb = -25f;
 
     [Header("Fade")]
     [SerializeField] private float fadeDuration = 0.35f;
 
     private Coroutine routine;
-    private float currentTargetDb;
     private bool isInitialized;
 
     private bool hasAmbience;
@@ -28,7 +27,6 @@ public class AudioDucker : MonoBehaviour
     private void Awake()
     {
         InitializeParameters();
-        currentTargetDb = normalVolumeDb;
     }
 
     private void InitializeParameters()
@@ -53,15 +51,28 @@ public class AudioDucker : MonoBehaviour
 
     public void Duck()
     {
-        StartFade(duckedVolumeDb);
+        // Приглушаем оба канала до duckedVolumeDb
+        StartFade(duckedVolumeDb, duckedVolumeDb);
     }
 
     public void Restore()
     {
-        StartFade(normalVolumeDb);
+        // Запрашиваем актуальные настройки пользователя
+        float targetAmbienceDb = 0f;
+        float targetSfxDb = 0f;
+
+        if (SettingsManager.Instance != null)
+        {
+            // Берем линейные значения из настроек и переводим их в децибелы
+            targetAmbienceDb = Mathf.Log10(SettingsManager.Instance.AmbienceVolume) * 20f;
+            targetSfxDb = Mathf.Log10(SettingsManager.Instance.SFXVolume) * 20f;
+        }
+
+        // Плавно возвращаем каждый канал к его собственной пользовательской громкости
+        StartFade(targetAmbienceDb, targetSfxDb);
     }
 
-    private void StartFade(float targetDb)
+    private void StartFade(float targetAmbienceDb, float targetSfxDb)
     {
         if (mixer == null)
             return;
@@ -69,22 +80,18 @@ public class AudioDucker : MonoBehaviour
         if (!isInitialized)
             InitializeParameters();
 
-        if (Mathf.Approximately(currentTargetDb, targetDb))
-            return;
-
-        currentTargetDb = targetDb;
-
         if (routine != null)
             StopCoroutine(routine);
 
-        routine = StartCoroutine(FadeRoutine(targetDb));
+        routine = StartCoroutine(FadeRoutine(targetAmbienceDb, targetSfxDb));
     }
 
-    private IEnumerator FadeRoutine(float targetDb)
+    private IEnumerator FadeRoutine(float targetAmbienceDb, float targetSfxDb)
     {
-        float startAmbienceDb = normalVolumeDb;
-        float startSfxDb = normalVolumeDb;
+        float startAmbienceDb = 0f;
+        float startSfxDb = 0f;
 
+        // Получаем текущие значения прямо из миксера, чтобы начать плавный переход оттуда, где мы сейчас
         if (hasAmbience)
             mixer.GetFloat(ambienceVolumeParam, out startAmbienceDb);
 
@@ -93,7 +100,7 @@ public class AudioDucker : MonoBehaviour
 
         if (fadeDuration <= 0f)
         {
-            ApplyVolume(targetDb, targetDb);
+            ApplyVolume(targetAmbienceDb, targetSfxDb);
             routine = null;
             yield break;
         }
@@ -105,16 +112,15 @@ public class AudioDucker : MonoBehaviour
             time += Time.deltaTime;
             float t = Mathf.Clamp01(time / fadeDuration);
 
-            float ambienceDb = Mathf.Lerp(startAmbienceDb, targetDb, t);
-            float sfxDb = Mathf.Lerp(startSfxDb, targetDb, t);
+            float currentAmbienceDb = Mathf.Lerp(startAmbienceDb, targetAmbienceDb, t);
+            float currentSfxDb = Mathf.Lerp(startSfxDb, targetSfxDb, t);
 
-            ApplyVolume(ambienceDb, sfxDb);
+            ApplyVolume(currentAmbienceDb, currentSfxDb);
 
             yield return null;
         }
 
-        ApplyVolume(targetDb, targetDb);
-
+        ApplyVolume(targetAmbienceDb, targetSfxDb);
         routine = null;
     }
 
